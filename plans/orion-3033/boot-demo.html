@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ORION-OS BOOT — demo v3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet" />
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body { background: #000; overflow: hidden; }
+
+  .stage {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    background: #000;
+  }
+
+  /* camera-side lens vignette — the frame reads as a photographed shot, not a web page */
+  .stage::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 5;
+    background: radial-gradient(125% 105% at 50% 44%, transparent 42%, rgba(0, 0, 0, 0.28) 74%, rgba(0, 0, 0, 0.62) 100%);
+  }
+
+  /* cover-fit frame locked to the console image's aspect ratio (1672 x 941) */
+  .frame {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: max(100vw, 177.68vh);
+    aspect-ratio: 1672 / 941;
+    animation: drift 34s ease-in-out infinite alternate;
+  }
+
+  /* barely-there handheld push-in; stills of this frame should never look locked off */
+  @keyframes drift {
+    from { transform: translate(-50%, -50%) scale(1.002); }
+    to { transform: translate(-50.5%, -49.7%) scale(1.014); }
+  }
+
+  /* the CRT lighting the room it sits in — the single biggest cue that the text is really there */
+  .spill {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    mix-blend-mode: screen;
+    background: radial-gradient(ellipse 40% 44% at 50.1% 37.7%,
+      rgba(80, 195, 255, 0.17), rgba(40, 110, 255, 0.07) 52%, transparent 74%);
+    animation: spillpulse 7.5s ease-in-out infinite;
+  }
+  @keyframes spillpulse {
+    0%, 100% { opacity: 0.85; }
+    43% { opacity: 1; }
+    61% { opacity: 0.78; }
+  }
+
+  /* animated film grain over the whole plate */
+  .grain {
+    position: absolute;
+    inset: -12%;
+    pointer-events: none;
+    z-index: 6;
+    opacity: 0.07;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
+    animation: grain 0.75s steps(5) infinite;
+  }
+  @keyframes grain {
+    0% { transform: translate(0, 0); }
+    20% { transform: translate(-2.4%, 1.8%); }
+    40% { transform: translate(1.9%, -2.1%); }
+    60% { transform: translate(-1.6%, -1.4%); }
+    80% { transform: translate(2.2%, 1.2%); }
+    100% { transform: translate(0, 0); }
+  }
+
+  .console {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  /* the CRT glass cutout, measured from the image (x 345-1333, y 48-662 of 1672 x 941) */
+  .screen-wrap {
+    position: absolute;
+    left: 20.63%;
+    top: 5.1%;
+    width: 59.15%;
+    height: 65.36%;
+    border-radius: 3cqw;
+    overflow: hidden;
+    z-index: 2; /* keeps the glass above the light spill so the text itself stays crisp */
+    background: #00060a;
+    container-type: inline-size;
+  }
+
+  /* scanlines */
+  .screen-wrap::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(0deg, transparent 0 1.5px, rgba(0, 0, 0, 0.24) 1.5px 3px);
+    z-index: 2;
+  }
+
+  /* glass vignette + faint phosphor ambience */
+  .screen-wrap::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 3;
+    box-shadow:
+      inset 0 0 6cqw rgba(0, 0, 0, 0.9),
+      inset 0 0 1.4cqw rgba(116, 249, 255, 0.07);
+    border-radius: inherit;
+  }
+
+  /* aperture grille + a raking reflection in the glass (no roll bar — reads as a gimmick) */
+  .glass {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 4;
+    overflow: hidden;
+    border-radius: inherit;
+  }
+  .glass::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    mix-blend-mode: screen;
+    background:
+      linear-gradient(112deg, rgba(190, 230, 255, 0.03) 0 6%, transparent 17%),
+      repeating-linear-gradient(90deg,
+        rgba(255, 40, 40, 0.018) 0 1px,
+        rgba(40, 255, 90, 0.018) 1px 2px,
+        rgba(40, 90, 255, 0.018) 2px 3px);
+  }
+  .flicker { animation: flicker 9s infinite steps(1); }
+
+  @keyframes flicker {
+    0%, 100% { opacity: 1; }
+    23% { opacity: 0.97; }
+    24% { opacity: 1; }
+    57% { opacity: 0.98; }
+    58% { opacity: 1; }
+    81% { opacity: 0.96; }
+    82% { opacity: 1; }
+  }
+
+  /* type is sized against the glass width (cqw) so it holds its proportions at any viewport;
+     the whole scale sits ~1/3 smaller than the glyph height the bezel perspective implies */
+  .screen {
+    height: 100%;
+    overflow-y: auto;
+    scrollbar-width: none;
+    padding: 3.2cqw 3.6cqw 3.6cqw;
+    font-family: 'VT323', monospace;
+    font-size: clamp(9px, 1.8cqw, 19px);
+    line-height: 1.35;
+    letter-spacing: 0.4px;
+    color: #74f9ff;
+    /* phosphor: tight core, wide halation, and a convergence error either side of the stroke */
+    text-shadow:
+      -0.5px 0 0 rgba(255, 70, 70, 0.22),
+      0.5px 0 0 rgba(70, 120, 255, 0.22),
+      0 0 3px rgba(116, 249, 255, 0.55),
+      0 0 9px rgba(116, 249, 255, 0.3),
+      0 0 22px rgba(40, 110, 255, 0.28);
+    white-space: pre-wrap;
+    filter: blur(0.32px); /* no CRT resolves a glyph edge perfectly sharp */
+    animation: sync 13s steps(1) infinite;
+  }
+
+  /* rare sync stumble — reads as an unstable signal rather than a CSS animation */
+  @keyframes sync {
+    0%, 92.8%, 100% { transform: translate(0, 0); }
+    93% { transform: translate(-0.14%, -0.28%); }
+    93.3% { transform: translate(0.1%, 0.22%); }
+    93.6% { transform: translate(0, 0); }
+  }
+  .screen::-webkit-scrollbar { display: none; }
+
+  .masthead {
+    border: 0.22cqw solid #74f9ff;
+    padding: 1.3cqw 1.7cqw 1.2cqw;
+    margin-bottom: 2cqw;
+    box-shadow: 0 0 1cqw rgba(116, 249, 255, 0.25), inset 0 0 1cqw rgba(116, 249, 255, 0.12);
+  }
+  .masthead .title {
+    font-size: 3cqw;
+    letter-spacing: 0.6cqw;
+    color: #c9feff;
+    text-shadow: 0 0 7px rgba(90, 190, 255, 0.55);
+  }
+  .masthead .sub { color: #3f93a3; font-size: 1.55cqw; letter-spacing: 0.5px; }
+  .masthead .meters {
+    display: flex;
+    gap: 2cqw;
+    margin-top: 0.9cqw;
+    color: #3f93a3;
+    font-size: 1.55cqw;
+    white-space: nowrap;
+  }
+  .masthead .meters b { color: #c9feff; font-weight: normal; }
+
+  .line { min-height: 1.3em; }
+  .dim { color: #3f93a3; text-shadow: none; }
+  .ok { color: #c9feff; text-shadow: 0 0 6px rgba(90, 190, 255, 0.5); }
+  .fail { color: #ff5c49; text-shadow: 0 0 6px rgba(255, 92, 73, 0.5); }
+  .alert {
+    color: #ff5c49;
+    text-shadow: 0 0 6px rgba(255, 92, 73, 0.5);
+    animation: alertblink 1.1s steps(1) infinite;
+  }
+  @keyframes alertblink { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+
+  .cursor {
+    display: inline-block;
+    width: 0.62em;
+    height: 1em;
+    background: #74f9ff;
+    vertical-align: -0.12em;
+    animation: blink 1s steps(1) infinite;
+  }
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+  /* ---- intro overlays: dithered logo, then boot-loading screen ---- */
+  .overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.8cqw;
+    padding: 3cqw;
+    overflow: hidden;
+    font-family: 'VT323', monospace;
+    color: #74f9ff;
+    text-align: center;
+    filter: blur(0.32px);
+    animation: sync 13s steps(1) infinite;
+  }
+  .overlay[hidden] { display: none; }
+
+  .logo { position: relative; }
+
+  /* checkerboard alpha mask eats every other pixel of the glyphs = 1-bit console dither */
+  .logo-art {
+    white-space: pre;
+    font-size: 1.85cqw;
+    line-height: 1.04;
+    color: #9df3ff;
+    text-shadow: 0 0 0.9cqw rgba(90, 190, 255, 0.6);
+    -webkit-mask-image: repeating-conic-gradient(#000 0% 25%, transparent 0% 50%);
+    mask-image: repeating-conic-gradient(#000 0% 25%, transparent 0% 50%);
+    -webkit-mask-size: 2px 2px;
+    mask-size: 2px 2px;
+    animation: derez 0.8s steps(4) both; /* mark resolves out of a coarse dither into the fine one */
+  }
+  @keyframes derez {
+    from { -webkit-mask-size: 9px 9px; mask-size: 9px 9px; }
+    to { -webkit-mask-size: 2px 2px; mask-size: 2px 2px; }
+  }
+  .logo-art .row { animation: warmup 0.5s steps(3) both; }
+  .logo-art .row:nth-child(2) { animation-delay: 0.06s; }
+  .logo-art .row:nth-child(3) { animation-delay: 0.12s; }
+  .logo-art .row:nth-child(4) { animation-delay: 0.18s; }
+  .logo-art .row:nth-child(5) { animation-delay: 0.24s; }
+  @keyframes warmup {
+    from { color: #16515e; text-shadow: none; }
+    to { color: #9df3ff; }
+  }
+
+  .logo-tag {
+    margin-top: 0.9cqw;
+    font-size: 1.85cqw;
+    letter-spacing: 0.26cqw;
+    color: #74f9ff;
+  }
+  .logo-sub { font-size: 1.45cqw; color: #3f93a3; letter-spacing: 0.5px; }
+
+  .boot-title {
+    font-size: 2.7cqw;
+    letter-spacing: 0.32cqw;
+    color: #c9feff;
+    text-shadow: 0 0 0.7cqw rgba(90, 190, 255, 0.5);
+  }
+  .boot-dots { display: inline-block; width: 3ch; text-align: left; }
+  .boot-meter { font-size: 1.95cqw; white-space: pre; }
+  .boot-note { font-size: 1.45cqw; color: #3f93a3; letter-spacing: 0.5px; }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .hint {
+    position: absolute;
+    left: 50%;
+    bottom: 10px;
+    transform: translateX(-50%);
+    font-family: 'VT323', monospace;
+    font-size: 15px;
+    color: #35505a;
+    z-index: 7;
+    letter-spacing: 1px;
+    text-shadow: 0 1px 2px #000;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .flicker, .cursor, .alert, .logo-art, .logo-art .row,
+    .frame, .spill, .grain, .screen, .overlay { animation: none; }
+    .grain { display: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage">
+    <div class="frame">
+      <img class="console" src="console.png" alt="" />
+      <div class="screen-wrap flicker">
+        <div class="overlay" id="phase-logo">
+          <div class="logo">
+            <span class="sr-only">OrionOS</span>
+            <div class="logo-art" aria-hidden="true"><div class="row"> █████    ██████      ███      █████    ██   ██</div><div class="row">██   ██   ██   ██     ███     ██   ██   ███  ██</div><div class="row">██   ██   ██████      ███     ██   ██   ████ ██</div><div class="row">██   ██   ██  ██      ███     ██   ██   ██ ████</div><div class="row"> █████    ██   ██     ███      █████    ██   ██</div></div>
+            <div class="logo-tag" aria-hidden="true">▒▒▒ O S ▒▒▒</div>
+          </div>
+          <div class="logo-sub">SHIPBOARD KERNEL 3.3.0 · DEEP RANGE BUILD 33X</div>
+        </div>
+
+        <div class="overlay" id="phase-boot" hidden>
+          <div class="boot-title">BOOT LOADING<span class="boot-dots" id="boot-dots"></span></div>
+          <div class="boot-meter"><span id="boot-bar"></span> <span id="boot-pct">  0%</span></div>
+          <div class="boot-note">MOUNTING KRNL33X.IMG · O.S.S. ORION</div>
+        </div>
+
+        <div class="screen" id="screen" hidden>
+          <div class="masthead">
+            <div class="title">ORION-OS</div>
+            <div class="sub">SHIPBOARD KERNEL 3.3.0 · DEEP RANGE BUILD 33X · O.S.S. ORION</div>
+            <div class="sub">ORION INDUSTRIES © 2991–3033 · UNAUTHORIZED ACCESS PROHIBITED</div>
+            <div class="meters"><span>PWR <b>▓▓▓▓▓</b></span><span>O2 <b>▓▓▓▓░</b></span><span>GRAV <b>▓▓▓░░</b></span><span>SIG <b>▓░░░░</b></span></div>
+          </div>
+          <div id="out"></div>
+        </div>
+
+        <div class="glass" aria-hidden="true"></div>
+      </div>
+      <div class="spill" aria-hidden="true"></div>
+    </div>
+    <div class="grain" aria-hidden="true"></div>
+    <div class="hint">ENTER — SKIP&nbsp;&nbsp;·&nbsp;&nbsp;R — REPLAY</div>
+  </div>
+
+<script>
+  // Step types:
+  //  line — print segments, pause
+  //  gap  — blank line
+  //  mem  — memcore count-up to target
+  //  bar  — block-character progress bar that fills in place
+  //  spin — label with a |/-\ spinner that resolves to an [ OK ] / [FAIL] tag
+  //  app  — append text to the previous line
+  const STEPS = [
+    { line: [['[T+00.000] ', 'dim'], ['cold start — reactor handshake']], d: 500 },
+    { spin: '[T+00.084] helios-ix core online ..........', tag: '[ OK ]', cls: 'ok', spins: 4, d: 260 },
+    { mem: '[T+00.112] memcore test : ', target: 65536, d: 420 },
+    { bar: '[T+00.198] loading krnl33x.img ', width: 14, d: 500 },
+    { gap: true, d: 120 },
+    { spin: '[T+00.310] life support daemon ............', tag: '[ OK ]', cls: 'ok', spins: 5, d: 200 },
+    { spin: '[T+00.342] gravity ring spin-up ...........', tag: '[ OK ]', cls: 'ok', spins: 7, d: 200 },
+    { spin: '[T+00.401] nav array alignment ............', tag: '[ OK ]', cls: 'ok', spins: 4, d: 200 },
+    { spin: '[T+00.455] hull sensor mesh ...............', tag: '[ OK ]', cls: 'ok', spins: 5, d: 200 },
+    { spin: '[T+00.512] cryo bay watchdog ..............', tag: '[ OK ]', cls: 'ok', spins: 4, d: 380 },
+    { gap: true, d: 150 },
+    { line: [['[T+00.688] ', 'dim'], ['mounting /comms']], d: 550 },
+    { spin: '[T+00.702] visual feed handshake ..........', tag: '[FAIL]', cls: 'fail', spins: 14, d: 420 },
+    { spin: '[T+00.734] retrying visual feed (1/2) .....', tag: '[FAIL]', cls: 'fail', spins: 16, d: 420 },
+    { spin: '[T+00.771] retrying visual feed (2/2) .....', tag: '[FAIL]', cls: 'fail', spins: 18, d: 550 },
+    { spin: '[T+00.803] text relay handshake ...........', tag: '[ OK ]', cls: 'ok', spins: 5, d: 400 },
+    { line: [['!! VISUAL COMMS OFFLINE', 'alert']], d: 60 },
+    { line: [['!! RELAY LOCKED TO TEXT-ONLY MODE', 'alert']], d: 900 },
+    { gap: true, d: 150 },
+    { spin: '[T+00.912] arming distress scanner ........', tag: '[ OK ]', cls: 'ok', spins: 5, d: 350 },
+    { line: [['[T+00.998] ', 'dim'], ['handoff → comms relay console']], d: 700 },
+    { gap: true, d: 100 },
+    { line: [['READY.', 'ok']], d: 200 },
+  ];
+
+  const SPIN_CHARS = ['|', '/', '-', '\\'];
+  const SPEED = 1.5; // single pacing knob — raise to slow the whole boot down, lower to speed it up
+  const LOGO_HOLD = 1200;
+  const BOOT_BAR_WIDTH = 18;
+  const screen = document.getElementById('screen');
+  const out = document.getElementById('out');
+  const phaseLogo = document.getElementById('phase-logo');
+  const phaseBoot = document.getElementById('phase-boot');
+  const bootBar = document.getElementById('boot-bar');
+  const bootPct = document.getElementById('boot-pct');
+  const bootDots = document.getElementById('boot-dots');
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let skip = false;
+  let running = false;
+
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const wait = (ms) => sleep(skip || reduced ? 0 : ms * SPEED);
+  // a hold is dwell time, not motion — reduced-motion keeps it so the intro doesn't strobe past
+  const hold = (ms) => sleep(skip ? 0 : ms * SPEED);
+  const scrollBottom = () => { screen.scrollTop = screen.scrollHeight; };
+
+  const cursor = document.createElement('span');
+  cursor.className = 'cursor';
+
+  const addLine = () => {
+    const div = document.createElement('div');
+    div.className = 'line';
+    out.appendChild(div);
+    scrollBottom();
+    return div;
+  };
+
+  const span = (text, cls) => {
+    const s = document.createElement('span');
+    s.textContent = text;
+    if (cls) s.className = cls;
+    return s;
+  };
+
+  const parkCursor = (div) => {
+    cursor.remove();
+    div.appendChild(cursor);
+    scrollBottom();
+  };
+
+  const runMem = async (div, label, target) => {
+    div.appendChild(span(label.slice(0, 11), 'dim'));
+    div.appendChild(span(label.slice(11)));
+    const counter = span('0K');
+    div.appendChild(counter);
+    parkCursor(div);
+    if (!skip && !reduced) {
+      for (let k = 0; k <= target; k += 2048) {
+        counter.textContent = k + 'K';
+        await wait(16);
+        if (skip) break;
+      }
+    }
+    counter.textContent = target + 'K ';
+    div.appendChild(span('OK', 'ok'));
+    parkCursor(div);
+  };
+
+  const runBar = async (div, label, width) => {
+    div.appendChild(span(label.slice(0, 11), 'dim'));
+    div.appendChild(span(label.slice(11)));
+    const bar = span('░'.repeat(width));
+    div.appendChild(bar);
+    parkCursor(div);
+    for (let i = 1; i <= width; i++) {
+      if (!skip && !reduced) await wait(45);
+      bar.textContent = '▓'.repeat(i) + '░'.repeat(width - i);
+    }
+    div.appendChild(span(' 100%', 'ok'));
+    parkCursor(div);
+  };
+
+  const runSpin = async (div, label, tag, cls, spins) => {
+    div.appendChild(span(label.slice(0, 11), 'dim'));
+    div.appendChild(span(label.slice(11) + ' '));
+    const spinner = span(SPIN_CHARS[0]);
+    div.appendChild(spinner);
+    parkCursor(div);
+    for (let i = 0; i < spins && !skip && !reduced; i++) {
+      spinner.textContent = SPIN_CHARS[i % 4];
+      await wait(95);
+    }
+    spinner.remove();
+    div.appendChild(span(tag, cls));
+    parkCursor(div);
+  };
+
+  const runBootMeter = async () => {
+    for (let i = 0; i <= BOOT_BAR_WIDTH; i++) {
+      bootBar.textContent = '▓'.repeat(i) + '░'.repeat(BOOT_BAR_WIDTH - i);
+      bootPct.textContent = String(Math.round((i / BOOT_BAR_WIDTH) * 100)).padStart(3, ' ') + '%';
+      bootDots.textContent = '.'.repeat(i % 4);
+      await wait(52);
+    }
+    bootDots.textContent = '...';
+    await hold(300);
+  };
+
+  const runIntro = async () => {
+    screen.hidden = true;
+    phaseBoot.hidden = true;
+    phaseLogo.hidden = false;
+    await sleep(skip ? 0 : LOGO_HOLD);
+    phaseLogo.hidden = true;
+    phaseBoot.hidden = false;
+    await runBootMeter();
+    phaseBoot.hidden = true;
+    screen.hidden = false;
+  };
+
+  const run = async () => {
+    out.textContent = '';
+    let last = null;
+    for (const step of STEPS) {
+      if (step.gap) { last = addLine(); last.innerHTML = '&nbsp;'; await wait(step.d); continue; }
+      if (step.mem) { last = addLine(); await runMem(last, step.mem, step.target); await wait(step.d); continue; }
+      if (step.bar) { last = addLine(); await runBar(last, step.bar, step.width); await wait(step.d); continue; }
+      if (step.spin) { last = addLine(); await runSpin(last, step.spin, step.tag, step.cls, step.spins); await wait(step.d); continue; }
+      if (step.app) {
+        if (last) { last.appendChild(span(step.app, step.cls)); parkCursor(last); }
+        await wait(step.d);
+        continue;
+      }
+      last = addLine();
+      for (const [text, cls] of step.line) last.appendChild(span(text, cls));
+      parkCursor(last);
+      await wait(step.d);
+    }
+    const end = addLine();
+    parkCursor(end);
+    scrollBottom();
+  };
+
+  const boot = async () => {
+    running = true;
+    skip = false;
+    await runIntro();
+    await run();
+    running = false;
+  };
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { skip = true; }
+    if ((e.key === 'r' || e.key === 'R') && !running) { boot(); }
+  });
+  document.addEventListener('click', () => { if (running) skip = true; });
+
+  boot();
+</script>
+</body>
+</html>

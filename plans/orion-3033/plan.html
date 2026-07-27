@@ -1,0 +1,589 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="generator" content="plan-render (local)" />
+<title>Orion 3033 — retro terminal rescue game</title>
+
+<script>
+(function(){
+  var k='plan-render-theme';
+  var saved=localStorage.getItem(k)||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
+  document.documentElement.dataset.theme=saved;
+  window.addEventListener('DOMContentLoaded',function(){
+    var b=document.getElementById('pl-theme');
+    if(!b)return;
+    b.addEventListener('click',function(){
+      var next=document.documentElement.dataset.theme==='dark'?'light':'dark';
+      document.documentElement.dataset.theme=next;localStorage.setItem(k,next);
+    });
+  });
+})();
+</script>
+<style>
+:root{
+  --pl-bg:#f6f7f9; --pl-paper:#ffffff; --pl-ink:#1a1d21; --pl-muted:#5b6573;
+  --pl-line:#e3e6ea; --pl-accent:#2f6feb; --pl-accent-soft:#e7f0ff; --pl-code-bg:#f6f8fa;
+  --pl-add:#e6ffec; --pl-del:#ffebe9; --pl-radius:10px;
+  --wf-ink:#1f2329; --wf-muted:#6b7480; --wf-line:#c9ced6; --wf-paper:#ffffff;
+  --wf-card:#fbfcfd; --wf-accent:#2f6feb; --wf-accent-fg:#ffffff; --wf-accent-soft:#e7f0ff;
+  --wf-warn:#c2410c; --wf-ok:#15803d; --wf-radius:8px;
+}
+[data-theme="dark"]{
+  --pl-bg:#0e1116; --pl-paper:#171b21; --pl-ink:#e6e9ee; --pl-muted:#9aa4b2;
+  --pl-line:#2a2f37; --pl-accent:#5b9bff; --pl-accent-soft:#16263f; --pl-code-bg:#11151b;
+  --pl-add:#0f2e1a; --pl-del:#3a1417;
+  --wf-ink:#e6e9ee; --wf-muted:#9aa4b2; --wf-line:#3a4049; --wf-paper:#1b2026;
+  --wf-card:#222831; --wf-accent:#5b9bff; --wf-accent-fg:#0e1116; --wf-accent-soft:#16263f;
+  --wf-warn:#fb923c; --wf-ok:#4ade80;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--pl-bg);color:var(--pl-ink);
+  font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+.pl-doc{max-width:860px;margin:0 auto;padding:40px 24px 120px}
+.pl-topbar{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:12px;
+  padding:12px 24px;background:var(--pl-paper);border-bottom:1px solid var(--pl-line)}
+.pl-topbar h1{font-size:15px;margin:0;font-weight:650}
+.pl-topbar .pl-status{font-size:12px;color:var(--pl-muted);border:1px solid var(--pl-line);
+  border-radius:999px;padding:2px 10px}
+.pl-spacer{flex:1}
+.pl-theme-btn{cursor:pointer;border:1px solid var(--pl-line);background:var(--pl-paper);
+  color:var(--pl-ink);border-radius:8px;padding:5px 10px;font-size:13px}
+.pl-doc h1{font-size:28px;margin:8px 0 4px} .pl-doc h2{font-size:21px;margin:28px 0 8px}
+.pl-doc h3{font-size:17px;margin:22px 0 6px} .pl-doc h4{font-size:14px;margin:14px 0 4px}
+.pl-doc a{color:var(--pl-accent)} .pl-doc p{margin:8px 0}
+.pl-doc ul,.pl-doc ol{margin:8px 0;padding-left:22px}
+.pl-doc blockquote{margin:10px 0;padding:2px 14px;border-left:3px solid var(--pl-line);color:var(--pl-muted)}
+.pl-doc>p>code,.pl-doc li code{background:var(--pl-code-bg);border:1px solid var(--pl-line);
+  border-radius:5px;padding:1px 5px;font-size:.88em;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.pl-block{margin:18px 0}
+.pl-cap{font-size:12px;color:var(--pl-muted);margin-top:6px}
+.pl-note{color:var(--pl-muted);font-size:.9em;margin-left:6px}
+.pl-pill{display:inline-block;font-size:11px;border:1px solid var(--pl-line);border-radius:999px;
+  padding:1px 8px;color:var(--pl-muted)}
+.pl-rec{background:var(--pl-accent-soft);border-color:transparent;color:var(--pl-accent)}
+/* callout */
+.pl-callout-tone{border:1px solid var(--pl-line);border-left-width:4px;border-radius:var(--pl-radius);
+  padding:10px 14px;background:var(--pl-paper)}
+.pl-tone-info{border-left-color:var(--pl-accent)} .pl-tone-decision{border-left-color:#7c3aed}
+.pl-tone-risk,.pl-tone-warning{border-left-color:#c2410c} .pl-tone-success{border-left-color:#15803d}
+/* table */
+.pl-block table{border-collapse:collapse;width:100%;font-size:14px}
+.pl-block th,.pl-block td{border:1px solid var(--pl-line);padding:6px 10px;text-align:left;vertical-align:top}
+.pl-block thead th{background:var(--pl-code-bg)}
+/* checklist */
+.pl-checklist{list-style:none;padding:0} .pl-checklist li{display:flex;gap:8px;padding:3px 0}
+.pl-check{color:var(--pl-muted)} .pl-done .pl-check{color:var(--pl-accent)}
+/* file tree */
+.pl-filetree{list-style:none;padding:8px 10px;border:1px solid var(--pl-line);border-radius:var(--pl-radius);
+  background:var(--pl-paper);font-family:ui-monospace,Menlo,monospace;font-size:13px}
+.pl-filetree li{padding:2px 0}
+.pl-badge{font-size:10px;border-radius:4px;padding:0 6px;text-transform:uppercase}
+.pl-added{background:var(--pl-add)} .pl-modified{background:var(--pl-accent-soft)}
+.pl-removed{background:var(--pl-del)} .pl-renamed{background:#fef9c3}
+/* data model */
+.pl-entities{display:flex;flex-wrap:wrap;gap:14px}
+.pl-entity{border:1px solid var(--pl-line);border-radius:var(--pl-radius);overflow:hidden;min-width:220px;background:var(--pl-paper)}
+.pl-entity-head{background:var(--pl-code-bg);padding:6px 10px;font-weight:650;font-size:13px}
+.pl-entity table{font-size:12.5px} .pl-entity td{border:none;border-top:1px solid var(--pl-line);padding:4px 10px}
+.pl-fname{font-family:ui-monospace,Menlo,monospace} .pl-ftype{color:var(--pl-muted)}
+.pl-flag{font-size:10px;background:var(--pl-accent-soft);color:var(--pl-accent);border-radius:4px;padding:0 5px;margin-right:3px}
+.pl-relations{list-style:none;padding:8px 0;font-size:13px} .pl-rel{color:var(--pl-muted)}
+/* code */
+.pl-code-head{display:flex;align-items:center;background:var(--pl-code-bg);border:1px solid var(--pl-line);
+  border-bottom:none;border-radius:var(--pl-radius) var(--pl-radius) 0 0;padding:5px 12px;font-size:12px}
+.pl-code-head .pl-fname{font-weight:600} .pl-lang{color:var(--pl-muted)}
+.pl-block pre.hljs{margin:0;border:1px solid var(--pl-line);border-radius:0 0 var(--pl-radius) var(--pl-radius);
+  padding:12px 14px;overflow:auto;background:var(--pl-code-bg)}
+.pl-block pre.hljs code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.5}
+.pl-code-head + pre.hljs{border-radius:0 0 var(--pl-radius) var(--pl-radius)}
+/* diff */
+.pl-diff{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--pl-line);border-radius:var(--pl-radius);overflow:hidden}
+.pl-diff-col{font-family:ui-monospace,Menlo,monospace;font-size:12.5px}
+.pl-diff-before{border-right:1px solid var(--pl-line)}
+.pl-diff-label{background:var(--pl-code-bg);padding:4px 12px;font-size:11px;text-transform:uppercase;color:var(--pl-muted)}
+.pl-line{padding:0 12px;white-space:pre-wrap}
+.pl-diff-before .pl-line{background:var(--pl-del)} .pl-diff-after .pl-line{background:var(--pl-add)}
+/* annotated code */
+.pl-acode{border:1px solid var(--pl-line);border-radius:var(--pl-radius);overflow:hidden;font-family:ui-monospace,Menlo,monospace;font-size:12.5px}
+.pl-aline{display:flex;gap:12px;padding:0 12px} .pl-lineno{color:var(--pl-muted);min-width:24px;text-align:right;user-select:none}
+.pl-annotations{list-style:none;padding:10px 0;font-size:13px} .pl-annotations li{padding:3px 0}
+/* surfaces / wireframe */
+.pl-surface{border:1px solid var(--wf-line);border-radius:var(--wf-radius);background:var(--wf-paper);
+  overflow:hidden;margin:4px auto}
+.pl-surface-browser{max-width:760px} .pl-surface-desktop{max-width:840px}
+.pl-surface-mobile{max-width:320px} .pl-surface-popover{max-width:300px} .pl-surface-panel{max-width:380px}
+.pl-chrome{display:flex;gap:6px;padding:8px 12px;background:var(--wf-card);border-bottom:1px solid var(--wf-line)}
+.pl-chrome span{width:10px;height:10px;border-radius:999px;background:var(--wf-line)}
+.pl-wf{color:var(--wf-ink);min-height:120px}
+.pl-wf h1,.pl-wf h2,.pl-wf h3{color:var(--wf-ink);margin:0} .pl-wf p,.pl-wf small{color:var(--wf-muted)}
+.pl-wf .wf-card,.pl-wf .wf-box{border:1.4px solid var(--wf-line);border-radius:var(--wf-radius);
+  background:var(--wf-card);padding:12px}
+.pl-wf .wf-pill,.pl-wf .wf-chip{display:inline-block;border:1.4px solid var(--wf-line);border-radius:999px;
+  padding:2px 10px;font-size:12px}
+.pl-wf .wf-pill.accent,.pl-wf .wf-chip.accent{background:var(--wf-accent-soft);border-color:transparent;color:var(--wf-accent)}
+.pl-wf .wf-muted{color:var(--wf-muted)}
+.pl-wf input,.pl-wf select{border:1.4px solid var(--wf-line);border-radius:6px;padding:6px 8px;background:var(--wf-paper);color:var(--wf-ink);width:100%}
+.pl-wf label{display:block;font-size:13px}
+.pl-wf button{border:1.4px solid var(--wf-line);border-radius:6px;padding:6px 12px;background:var(--wf-card);color:var(--wf-ink);cursor:default;font-size:13px}
+.pl-wf button.primary,.pl-wf [data-primary]{background:var(--wf-accent);border-color:transparent;color:var(--wf-accent-fg)}
+.pl-wf [data-icon]{display:inline-block;width:1em;height:1em;border:1.4px solid var(--wf-line);border-radius:3px;vertical-align:-0.15em}
+.pl-wf hr{border:none;border-top:1.4px solid var(--wf-line)}
+.pl-skeleton *{color:transparent!important}
+/* diagram */
+.pl-diagram{border:1px solid var(--pl-line);border-radius:var(--pl-radius);padding:16px;background:var(--pl-paper);overflow:auto}
+.pl-diagram .diagram-panel{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.pl-diagram .diagram-node,.pl-diagram .diagram-box,.pl-diagram .diagram-card{border:1.4px solid var(--wf-line);
+  border-radius:var(--wf-radius);padding:8px 12px;background:var(--wf-card);color:var(--wf-ink)}
+.pl-diagram .diagram-pill{border:1.4px solid var(--wf-line);border-radius:999px;padding:2px 10px}
+.pl-diagram .diagram-muted{color:var(--wf-muted)}
+/* mermaid */
+.pl-mermaid .mermaid{display:flex;justify-content:center;background:var(--pl-paper);border:1px solid var(--pl-line);
+  border-radius:var(--pl-radius);padding:14px}
+/* endpoint */
+.pl-ep-head{display:flex;align-items:center;gap:10px;cursor:pointer;padding:8px 12px;border:1px solid var(--pl-line);
+  border-radius:var(--pl-radius);background:var(--pl-paper);list-style:none}
+.pl-method{font-size:11px;font-weight:700;color:#fff;border-radius:5px;padding:2px 8px}
+.pl-m-get{background:#15803d} .pl-m-post{background:#2f6feb} .pl-m-put{background:#c2410c}
+.pl-m-delete{background:#b91c1c} .pl-m-patch{background:#7c3aed}
+.pl-path{font-family:ui-monospace,Menlo,monospace} .pl-ep-summary{color:var(--pl-muted);font-size:13px}
+.pl-ep-body{border:1px solid var(--pl-line);border-top:none;border-radius:0 0 var(--pl-radius) var(--pl-radius);padding:12px}
+.pl-sub{font-size:12px;text-transform:uppercase;color:var(--pl-muted);margin:10px 0 4px}
+.pl-status{font-weight:700;font-size:12px} .pl-s2xx{color:#15803d} .pl-s4xx{color:#c2410c} .pl-s5xx{color:#b91c1c}
+/* columns / tabs */
+.pl-columns{display:grid;grid-template-columns:1fr 1fr;gap:16px} .pl-col-label{margin:0 0 6px}
+.pl-tabs{border:1px solid var(--pl-line);border-radius:var(--pl-radius);overflow:hidden}
+.pl-tab+.pl-tab{border-top:1px solid var(--pl-line)}
+.pl-tab-label{background:var(--pl-code-bg);padding:5px 12px;font-size:12px;font-family:ui-monospace,Menlo,monospace}
+.pl-tab-body{padding:4px 12px}
+/* question form */
+.pl-questionform{border:1px solid var(--pl-line);border-radius:var(--pl-radius);padding:14px;background:var(--pl-paper)}
+.pl-question+.pl-question{margin-top:14px;border-top:1px solid var(--pl-line);padding-top:14px}
+.pl-options,.pl-freeform{list-style:none;padding:0;margin:6px 0}
+.pl-options li{border:1px solid var(--pl-line);border-radius:8px;padding:8px 10px;margin:6px 0}
+.pl-freeform{border:1px dashed var(--pl-line);border-radius:8px;padding:14px;color:var(--pl-muted)}
+.pl-customhtml{border:1px solid var(--pl-line);border-radius:var(--pl-radius);padding:12px;background:var(--pl-paper)}
+.pl-jsontree{background:var(--pl-code-bg);border:1px solid var(--pl-line);border-radius:var(--pl-radius);padding:12px;overflow:auto;font-family:ui-monospace,Menlo,monospace;font-size:12.5px}
+/* canvas — full-bleed interactive pan/zoom board */
+.pl-canvas{border-bottom:1px solid var(--pl-line);background:var(--pl-paper)}
+.pl-canvas-bar{display:flex;align-items:center;gap:12px;padding:10px 24px}
+.pl-canvas-label,.pl-artboard-label{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--pl-muted)}
+.pl-canvas-controls{margin-left:auto;display:flex;gap:6px}
+.pl-cbtn{cursor:pointer;border:1px solid var(--pl-line);background:var(--pl-paper);color:var(--pl-ink);
+  border-radius:8px;padding:3px 10px;font-size:12px;min-width:30px}
+.pl-zoom-level{min-width:52px;font-variant-numeric:tabular-nums}
+.pl-viewport{position:relative;background:var(--pl-bg);
+  background-image:radial-gradient(var(--pl-line) 1px,transparent 1px);background-size:24px 24px}
+.pl-canvas:not(.is-live) .pl-viewport{overflow:auto;max-height:76vh;padding:24px}
+.pl-canvas:not(.is-live) .pl-artboard{margin:0 0 32px}
+.pl-canvas.is-live .pl-viewport{height:clamp(420px,72vh,880px);overflow:hidden;cursor:grab;touch-action:none}
+.pl-canvas.is-live .pl-viewport.is-panning{cursor:grabbing;user-select:none}
+.pl-canvas.is-live .pl-world{position:absolute;top:0;left:0;transform-origin:0 0}
+.pl-canvas.is-live .pl-artboard,.pl-canvas.is-live .pl-lane-label{position:absolute}
+.pl-artboard{width:760px}
+.pl-artboard[data-surface="desktop"]{width:840px}
+.pl-artboard[data-surface="mobile"]{width:320px}
+.pl-artboard[data-surface="popover"]{width:300px}
+.pl-artboard[data-surface="panel"]{width:380px}
+.pl-artboard .pl-surface{max-width:none;margin:4px 0}
+.pl-artboard-label{margin-bottom:6px}
+.pl-lane-label{font-size:13px;font-weight:650;color:var(--pl-ink);white-space:nowrap}
+.pl-annos{margin-top:8px} .pl-anno{font-size:13px;color:var(--pl-muted);padding:3px 0}
+/* canvas connectors */
+.pl-conn-layer{position:absolute;pointer-events:none;overflow:visible}
+.pl-conn-layer path{fill:none;stroke:var(--pl-muted);stroke-width:1.6}
+.pl-conn-layer marker path{fill:var(--pl-muted);stroke:none}
+.pl-conn-layer text{fill:var(--pl-muted);font-size:12px;paint-order:stroke;stroke:var(--pl-bg);stroke-width:4px}
+/* feedback — local click-to-pin comments */
+.pl-fb-mode .pl-doc .pl-block:hover,.pl-fb-mode .pl-artboard:hover{outline:2px dashed var(--pl-accent);outline-offset:4px;cursor:copy}
+.pl-fb-on{background:var(--pl-accent-soft);border-color:var(--pl-accent);color:var(--pl-accent)}
+.pl-fb-warn{border-color:var(--wf-warn);color:var(--wf-warn)}
+.pl-fb-target{position:relative}
+.pl-fb-pin{position:absolute;right:-12px;width:22px;height:22px;border-radius:999px;cursor:pointer;
+  background:var(--pl-accent);color:var(--wf-accent-fg);border:2px solid var(--pl-paper);
+  font-size:11px;font-weight:700;line-height:1;padding:0;z-index:4}
+.pl-fb-pop{display:none;position:fixed;z-index:20;width:280px;background:var(--pl-paper);
+  border:1px solid var(--pl-line);border-radius:var(--pl-radius);box-shadow:0 8px 28px rgba(0,0,0,.25);padding:10px}
+.pl-fb-pop .pl-fb-text{width:100%;resize:vertical;border:1px solid var(--pl-line);border-radius:6px;
+  background:var(--pl-bg);color:var(--pl-ink);font:13px/1.5 inherit;padding:6px 8px}
+.pl-fb-pop-row{display:flex;gap:6px;align-items:center;margin-top:8px}
+.pl-fb-save{background:var(--pl-accent-soft);border-color:var(--pl-accent);color:var(--pl-accent)}
+@media(max-width:640px){.pl-columns,.pl-diff{grid-template-columns:1fr}}
+/* highlight.js (github-ish, theme-aware) */
+.hljs-comment,.hljs-quote{color:#6a737d;font-style:italic}
+.hljs-keyword,.hljs-selector-tag,.hljs-built_in,.hljs-type{color:#d73a49}
+[data-theme="dark"] .hljs-keyword,[data-theme="dark"] .hljs-selector-tag,[data-theme="dark"] .hljs-built_in{color:#ff7b72}
+.hljs-string,.hljs-attr,.hljs-template-variable{color:#032f62}
+[data-theme="dark"] .hljs-string,[data-theme="dark"] .hljs-attr{color:#a5d6ff}
+.hljs-number,.hljs-literal{color:#005cc5} [data-theme="dark"] .hljs-number{color:#79c0ff}
+.hljs-title,.hljs-function .hljs-title,.hljs-section{color:#6f42c1} [data-theme="dark"] .hljs-title{color:#d2a8ff}
+.hljs-name,.hljs-tag{color:#22863a} [data-theme="dark"] .hljs-name{color:#7ee787}
+</style>
+</head>
+<body>
+<header class="pl-topbar">
+  <h1>Orion 3033 — retro terminal rescue game</h1><span class="pl-status">draft</span>
+  <span class="pl-spacer"></span>
+  <button id="pl-fb-copy" class="pl-theme-btn" style="display:none">Copy feedback</button>
+  <button id="pl-fb-toggle" class="pl-theme-btn" title="Click any block or artboard to pin a note">&#128172; Comment</button>
+  <button id="pl-theme" class="pl-theme-btn">Toggle theme</button>
+</header>
+<section class="pl-canvas" id="pl-canvas"><div class="pl-canvas-bar"><div class="pl-canvas-label">Canvas</div><div class="pl-canvas-controls"><button class="pl-cbtn" data-act="out" title="Zoom out">−</button><button class="pl-cbtn pl-zoom-level" data-act="reset" title="Reset to 100%">100%</button><button class="pl-cbtn" data-act="in" title="Zoom in">+</button><button class="pl-cbtn" data-act="fit" title="Zoom to fit">Fit</button></div></div><div class="pl-viewport"><div class="pl-world"><div class="pl-lane-label" data-lane="0">Boot flow — attract mode to terminal</div><div class="pl-artboard" data-id="title" data-lane="0" data-surface="browser"><div class="pl-artboard-label">1 · Title screen (attract mode)</div><div class="pl-surface pl-surface-browser"><div class="pl-chrome"><span></span><span></span><span></span></div><div class="pl-wf"><div style='display:flex;flex-direction:column;height:100%;box-sizing:border-box;padding:20px;gap:12px'><div style='display:flex;align-items:center;width:100%;white-space:nowrap'><small class='wf-muted'>ORION ENTERTAINMENT SYSTEM</small><div style='flex:1'></div><small class='wf-muted'>3033.07.25</small></div><div style='flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px'><div style='display:flex;justify-content:space-between;width:72%'><span style='width:3px;height:3px;border-radius:99px;background:var(--wf-muted)'></span><span style='width:2px;height:2px;border-radius:99px;background:var(--wf-line)'></span><span style='width:4px;height:4px;border-radius:99px;background:var(--wf-muted)'></span><span style='width:2px;height:2px;border-radius:99px;background:var(--wf-line)'></span><span style='width:3px;height:3px;border-radius:99px;background:var(--wf-muted)'></span><span style='width:2px;height:2px;border-radius:99px;background:var(--wf-line)'></span><span style='width:3px;height:3px;border-radius:99px;background:var(--wf-muted)'></span></div><h1 style='margin:0;letter-spacing:8px'>ORION 3033</h1><p class='wf-muted' style='margin:0;letter-spacing:3px'>A SIGNAL FROM A PLANET THAT SHOULD BE EMPTY</p><span class='wf-pill accent'>▸ PRESS START</span><div style='display:flex;justify-content:space-between;width:58%'><span style='width:2px;height:2px;border-radius:99px;background:var(--wf-line)'></span><span style='width:3px;height:3px;border-radius:99px;background:var(--wf-muted)'></span><span style='width:2px;height:2px;border-radius:99px;background:var(--wf-line)'></span><span style='width:4px;height:4px;border-radius:99px;background:var(--wf-muted)'></span><span style='width:2px;height:2px;border-radius:99px;background:var(--wf-line)'></span></div></div><div style='display:flex;justify-content:center;gap:24px;white-space:nowrap'><small class='wf-muted'>© 3033 ORION IND.</small><small class='wf-muted'>TEXT-ONLY INTERFACE</small><small class='wf-muted'>INSERT COIN</small></div></div></div></div><div class="pl-cap">Animated starfield, 8-bit logo, blinking PRESS START. Enter or click starts.</div><div class="pl-annos"><div class="pl-anno"><strong>Starfield</strong> Pure CSS layers drifting at different speeds; frozen under prefers-reduced-motion. Real palette is phosphor green on near-black — canvas tokens here are theme-neutral stand-ins.</div></div></div><div class="pl-artboard" data-id="intro" data-lane="0" data-surface="browser"><div class="pl-artboard-label">2 · Intro crawl</div><div class="pl-surface pl-surface-browser"><div class="pl-chrome"><span></span><span></span><span></span></div><div class="pl-wf"><div style='display:flex;flex-direction:column;height:100%;box-sizing:border-box;padding:20px'><div style='flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center'><div style='display:flex;flex-direction:column;gap:18px;max-width:75%'><p style='margin:0;letter-spacing:1px'>YEAR 3033. DEEP IN THE PERSEUS ARM, THE MINING SHIP O.S.S. ORION DRIFTS BETWEEN CONTRACTS.</p><p style='margin:0;letter-spacing:1px'>A DISTRESS CALL BLEEDS THROUGH THE STATIC. LV-221. NO REGISTERED COLONY. NO REASON FOR ANYONE TO BE THERE.</p><p style='margin:0;letter-spacing:1px'>YOU ARE THE CAPTAIN. YOU ANSWER.<span style='display:inline-block;width:9px;height:14px;background:var(--wf-accent);margin-left:4px'></span></p></div></div><div style='display:flex;width:100%;white-space:nowrap'><small class='wf-muted'>[ENTER] CONTINUE</small><div style='flex:1'></div><small class='wf-muted'>[S] SKIP</small></div></div></div></div><div class="pl-cap">Ominous typed intro. Enter reveals the current paragraph instantly; S skips the scene.</div><div class="pl-annos"><div class="pl-anno"><strong>Typewriter pacing</strong> Each paragraph types at ~24ms per character via the shared use-typewriter hook — the same hook drives the boot screen and terminal replies.</div></div></div><div class="pl-artboard" data-id="boot" data-lane="0" data-surface="browser"><div class="pl-artboard-label">3 · Ship OS boot</div><div class="pl-surface pl-surface-browser"><div class="pl-chrome"><span></span><span></span><span></span></div><div class="pl-wf"><div style='display:flex;flex-direction:column;height:100%;box-sizing:border-box;padding:20px;gap:9px'><strong>ORION-OS v3.3.0 — SHIPBOARD KERNEL</strong><small class='wf-muted'>(C) 2991-3033 ORION INDUSTRIES. UNAUTHORIZED ACCESS PROHIBITED.</small><hr style='margin:2px 0' /><div style='display:flex;align-items:center;gap:8px;white-space:nowrap'><span>MEMORY CHECK 65536K</span><div style='flex:1;border-bottom:1.4px dotted var(--wf-line)'></div><span class='wf-pill'>OK</span></div><div style='display:flex;align-items:center;gap:8px;white-space:nowrap'><span>LIFE SUPPORT DAEMON</span><div style='flex:1;border-bottom:1.4px dotted var(--wf-line)'></div><span class='wf-pill'>OK</span></div><div style='display:flex;align-items:center;gap:8px;white-space:nowrap'><span>NAV ARRAY</span><div style='flex:1;border-bottom:1.4px dotted var(--wf-line)'></div><span class='wf-pill'>OK</span></div><div style='display:flex;align-items:center;gap:8px;white-space:nowrap'><span>HULL SENSORS</span><div style='flex:1;border-bottom:1.4px dotted var(--wf-line)'></div><span class='wf-pill'>OK</span></div><div style='display:flex;align-items:center;gap:8px;white-space:nowrap'><span>COMM ARRAY — VISUAL FEED</span><div style='flex:1;border-bottom:1.4px dotted var(--wf-line)'></div><span class='wf-pill' style='color:var(--wf-warn);border-color:var(--wf-warn)'>FAIL</span></div><div style='display:flex;align-items:center;gap:8px;white-space:nowrap'><span>COMM ARRAY — TEXT RELAY</span><div style='flex:1;border-bottom:1.4px dotted var(--wf-line)'></div><span class='wf-pill'>OK</span></div><small style='color:var(--wf-warn)'>WARNING: VISUAL COMMS OFFLINE — RELAY RUNNING IN TEXT-ONLY MODE</small><div style='height:12px;border:1.4px solid var(--wf-line);padding:2px;margin-top:6px'><div style='width:72%;height:100%;background:var(--wf-accent)'></div></div><small class='wf-muted'>MOUNTING /COMMS …</small><div style='margin-top:auto'><small class='wf-muted'>BOOT COMPLETES AUTOMATICALLY — NO INPUT REQUIRED</small></div></div></div></div><div class="pl-cap">ORION-OS boot sequence, auto-advancing (~6s). The visual-feed FAIL line sets up text-only play.</div><div class="pl-annos"><div class="pl-anno"><strong>Scripted data</strong> Boot lines live in lib/game/boot-script.ts as data, revealed line by line — no logic in the component beyond the reveal timer.</div></div></div><div class="pl-artboard" data-id="terminal" data-lane="0" data-surface="browser"><div class="pl-artboard-label">4 · Terminal — first contact</div><div class="pl-surface pl-surface-browser"><div class="pl-chrome"><span></span><span></span><span></span></div><div class="pl-wf"><div style='display:flex;flex-direction:column;height:100%;box-sizing:border-box;padding:18px;gap:10px'><div style='display:flex;align-items:center;width:100%;gap:10px;white-space:nowrap'><strong>ORION SHIPNET // COMMS RELAY</strong><span class='wf-pill'>CH.7</span><div style='flex:1'></div><span class='wf-pill'>LINK: WEAK</span><span class='wf-pill accent'>TEXT-ONLY</span></div><hr style='margin:0' /><div style='flex:1;display:flex;flex-direction:column;gap:9px'><small class='wf-muted'>RELAY OPEN — SURFACE OF LV-221. UNKNOWN WRECK DETECTED IN CANYON GRID 7.</small><p style='margin:0'>ORION HOLDS ORBIT. THE LANDING TEAM IS PREPPED BUT BLIND — UNTIL THE SURVIVORS REACH OPEN SKY, THE SHUTTLE HAS NOWHERE TO LAND.</p><div class='wf-card' style='padding:10px 12px'><small class='wf-muted'>INCOMING · 00:41:07</small><p style='margin:4px 0 0 0'><strong>HALLORAN (SURVEY SHIP CASSIUS):</strong> is anyone reading this. we went down hard. three of us left. we crawled into a cave to get out of the storm and now something is moving in the dark below us.</p></div><small class='wf-muted'>RELAY: REPLIES REACH THE CREW AS TEXT. TYPE HELP FOR RELAY COMMANDS.</small></div><div style='display:flex;align-items:center;gap:8px;border-top:1.4px solid var(--wf-line);padding-top:10px;white-space:nowrap'><strong>></strong><span class='wf-muted'>type a reply to the crew</span><span style='width:9px;height:15px;background:var(--wf-accent)'></span></div><div style='display:flex;align-items:center;width:100%;gap:8px;white-space:nowrap'><span class='wf-pill'>CREW 3/3</span><span class='wf-pill'>LOC: CRASH SITE</span><div style='flex:1'></div><small class='wf-muted'>THREAT</small><span style='width:10px;height:10px;background:var(--wf-accent)'></span><span style='width:10px;height:10px;background:var(--wf-line)'></span><span style='width:10px;height:10px;background:var(--wf-line)'></span><span style='width:10px;height:10px;background:var(--wf-line)'></span><span style='width:10px;height:10px;background:var(--wf-line)'></span></div></div></div></div><div class="pl-cap">The core game screen: briefing paragraphs, first crew message, input line, status bar.</div><div class="pl-annos"><div class="pl-anno"><strong>One screen, three regions</strong> Header, scrolling aria-live log (flex 1), then input row and status bar pinned at the bottom. Focus lives in the input for the whole game.</div></div></div><div class="pl-lane-label" data-lane="1">Terminal states</div><div class="pl-artboard" data-id="help" data-lane="1" data-surface="browser"><div class="pl-artboard-label">HELP and STATUS</div><div class="pl-surface pl-surface-browser"><div class="pl-chrome"><span></span><span></span><span></span></div><div class="pl-wf"><div style='display:flex;flex-direction:column;height:100%;box-sizing:border-box;padding:18px;gap:10px'><div style='display:flex;align-items:center;width:100%;gap:10px;white-space:nowrap'><strong>ORION SHIPNET // COMMS RELAY</strong><div style='flex:1'></div><span class='wf-pill accent'>TEXT-ONLY</span></div><hr style='margin:0' /><div style='flex:1;display:flex;flex-direction:column;gap:9px'><p style='margin:0'><strong>> HELP</strong></p><div class='wf-box' style='padding:10px 12px;display:flex;flex-direction:column;gap:6px'><small class='wf-muted'>RELAY COMMANDS</small><span>HELP — this list</span><span>STATUS — crew vitals, threat level, location</span><span>LOOK — ask the crew to describe their surroundings</span><span class='wf-muted'>ANYTHING ELSE — sent to the crew as a text. Keywords steer them: LEFT, RIGHT, DOWN, BACK, HIDE, RUN, WAIT, QUIET, LIGHT…</span></div><p style='margin:0'><strong>> STATUS</strong></p><span>CREW 3/3 ALIVE · THREAT 1/5 · LOCATION: CRASH SITE · LINK: WEAK</span></div><div style='display:flex;align-items:center;gap:8px;border-top:1.4px solid var(--wf-line);padding-top:10px;white-space:nowrap'><strong>></strong><span style='width:9px;height:15px;background:var(--wf-accent)'></span></div><div style='display:flex;align-items:center;width:100%;gap:8px;white-space:nowrap'><span class='wf-pill'>CREW 3/3</span><span class='wf-pill'>LOC: CRASH SITE</span><div style='flex:1'></div><small class='wf-muted'>THREAT</small><span style='width:10px;height:10px;background:var(--wf-accent)'></span><span style='width:10px;height:10px;background:var(--wf-line)'></span><span style='width:10px;height:10px;background:var(--wf-line)'></span><span style='width:10px;height:10px;background:var(--wf-line)'></span><span style='width:10px;height:10px;background:var(--wf-line)'></span></div></div></div></div><div class="pl-cap">Global relay commands — handled by the parser before story keywords.</div></div><div class="pl-artboard" data-id="hunt" data-lane="1" data-surface="browser"><div class="pl-artboard-label">Act 2 — the hunt (threat high)</div><div class="pl-surface pl-surface-browser"><div class="pl-chrome"><span></span><span></span><span></span></div><div class="pl-wf"><div style='display:flex;flex-direction:column;height:100%;box-sizing:border-box;padding:18px;gap:10px'><div style='display:flex;align-items:center;width:100%;gap:10px;white-space:nowrap'><strong>ORION SHIPNET // COMMS RELAY</strong><div style='flex:1'></div><span class='wf-pill' style='color:var(--wf-warn);border-color:var(--wf-warn)'>SIGNAL SPIKING</span></div><hr style='margin:0' /><div style='flex:1;display:flex;flex-direction:column;gap:9px'><div class='wf-card' style='padding:10px 12px;border-color:var(--wf-warn)'><small style='color:var(--wf-warn)'>INCOMING · PRIORITY</small><p style='margin:4px 0 0 0'><strong>HALLORAN:</strong> IT DROPPED FROM THE CEILING. WE ARE IN THE WATER. IT IS BETWEEN US AND THE PASSAGE.</p></div><p style='margin:0'><strong>> HOLD STILL. LIGHTS OFF. LET IT PASS.</strong></p><div class='wf-card' style='padding:10px 12px'><p style='margin:0'><strong>HALLORAN:</strong> lights off. nobody is moving. i can hear it breathing through the water. hurry.</p></div><small style='color:var(--wf-warn)'>THREAT RISING — WRONG MOVES ARE LOUD MOVES.</small></div><div style='display:flex;align-items:center;gap:8px;border-top:1.4px solid var(--wf-line);padding-top:10px;white-space:nowrap'><strong>></strong><span style='width:9px;height:15px;background:var(--wf-accent)'></span></div><div style='display:flex;align-items:center;width:100%;gap:8px;white-space:nowrap'><span class='wf-pill'>CREW 3/3</span><span class='wf-pill'>LOC: RIVER GALLERY</span><div style='flex:1'></div><small style='color:var(--wf-warn)'>THREAT</small><span style='width:10px;height:10px;background:var(--wf-warn)'></span><span style='width:10px;height:10px;background:var(--wf-warn)'></span><span style='width:10px;height:10px;background:var(--wf-warn)'></span><span style='width:10px;height:10px;background:var(--wf-warn)'></span><span style='width:10px;height:10px;background:var(--wf-line)'></span></div></div></div></div><div class="pl-cap">Threat meter near max; stealth keywords lower it, noisy ones raise it.</div><div class="pl-annos"><div class="pl-anno"><strong>Threat 0–5</strong> Noisy keywords add +1, stealth choices subtract. At 5 the engine jumps to the overrun node regardless of the route the player picked.</div></div></div><div class="pl-artboard" data-id="lost" data-lane="1" data-surface="browser"><div class="pl-artboard-label">Fail state — signal lost</div><div class="pl-surface pl-surface-browser"><div class="pl-chrome"><span></span><span></span><span></span></div><div class="pl-wf"><div style='display:flex;flex-direction:column;height:100%;box-sizing:border-box;padding:20px'><div style='flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px'><h1 style='margin:0;letter-spacing:6px'>SIGNAL LOST</h1><div style='width:62%;height:6px;background:var(--wf-line)'></div><div style='width:38%;height:6px;background:var(--wf-line)'></div><div style='width:74%;height:6px;background:var(--wf-line)'></div><p class='wf-muted' style='margin:0'>CARRIER DROPPED — CREW STATUS UNKNOWN</p><div class='wf-box' style='padding:10px 14px'><p style='margin:0'>THE RELAY IS SILENT. THE RUN IS OVER. PRESS <strong>ENTER</strong> TO RETURN TO THE ORION.</p></div></div><div style='display:flex;align-items:center;gap:8px;border-top:1.4px solid var(--wf-line);padding-top:10px;white-space:nowrap'><strong>></strong><span style='width:9px;height:15px;background:var(--wf-accent)'></span></div></div></div></div><div class="pl-cap">Failure stays in-fiction: the relay drops. Runs are ephemeral — Enter returns to a fresh title.</div></div><div class="pl-artboard" data-id="rescue" data-lane="1" data-surface="browser"><div class="pl-artboard-label">Win state — crew secured</div><div class="pl-surface pl-surface-browser"><div class="pl-chrome"><span></span><span></span><span></span></div><div class="pl-wf"><div style='display:flex;flex-direction:column;height:100%;box-sizing:border-box;padding:20px;gap:12px'><small class='wf-muted'>RELAY: FLARE SIGHTED AT CANYON MOUTH. SHUTTLE AWAY.</small><div class='wf-card' style='padding:10px 12px'><p style='margin:0'><strong>HALLORAN:</strong> we see it. we see the shuttle. thank you, orion.</p></div><div style='flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px'><h1 style='margin:0;letter-spacing:6px'>CREW SECURED</h1><div class='wf-box' style='display:flex;flex-direction:column;gap:6px;padding:12px 16px'><span>SOULS RECOVERED — 3/3</span><span>WRONG TURNS — 4</span><span>CLOSE CALLS — 2</span><span>ELAPSED — 00:22:41</span></div><span class='wf-pill accent'>▸ PRESS ENTER — NEW GAME</span></div></div></div></div><div class="pl-cap">Extraction complete; run stats come from counters already in GameState.</div></div></div></div><script type="application/json" class="pl-connector-data">[{"from":"title","to":"intro","label":"START"},{"from":"intro","to":"boot","label":"ENTER"},{"from":"boot","to":"terminal","label":"AUTO"},{"from":"hunt","to":"lost","label":"THREAT 5/5"}]</script></section>
+<main class="pl-doc">
+<h3>Overview</h3>
+<p>Orion 3033 is a type-only retro game that runs as a single page in this Next.js 16 app. The player is the captain of the mining ship O.S.S. ORION, guiding the stranded crew of the survey ship CASSIUS out of a cave system on LV-221 by text relay — visual comms are down, so every reply the player types is a message the crew acts on, while something hunts them in the dark.</p>
+<p>The canvas above shows every screen: attract-mode title with animated starfield, ominous intro crawl, ship-OS boot sequence, and the terminal where the whole game plays out, plus its help, high-threat, fail, and win states. A standalone homage prototype of the boot screen lives at <code>plans/orion-3033/boot-demo.html</code>; its line script becomes <code>lib/game/boot-script.ts</code>.</p>
+<p><strong>Done means:</strong> <code>npm run dev</code> serves the complete loop — title → intro → boot → terminal — with a full authored campaign (3 acts, ~15 story nodes, 15–20 minutes) playable start to finish by typing; both endings reachable; runs are ephemeral — nothing persists and losing starts a fresh run; fully keyboard-playable; <code>npm run build</code> and <code>npm run lint</code> clean.</p>
+<p><strong>Non-goals for this cut:</strong> no backend, accounts, or route handlers; no persistence of any kind (settled below); desktop-first layout (mobile works but is not optimized); no LLM-driven dialogue (settled in Approach below); no i18n. Audio is the one genuinely open call — see Open Questions at the bottom.</p>
+<h3>Approach</h3>
+<p>The game is a small phase machine wrapping a data-driven story graph. All state lives in one <code>GameState</code> object driven by a pure reducer, so the UI components stay thin and the story is authored as data, not code.</p>
+<section class="pl-block pl-callout"><div class="pl-callout-tone pl-tone-decision"><p><strong>Pure client SPA, zero new runtime dependencies.</strong> <code>app/page.tsx</code> renders a single <code>'use client'</code> <code>&#x3C;Game /></code> component. No server actions, no API routes, no game-engine or animation library — and <strong>no three.js</strong>: the aesthetic is flat 8-bit, so the starfield, scanlines, flicker, and glow are pure CSS, and everything else is text. A WebGL scene would add hundreds of KB to fight the pixel look. The only additions are two Google pixel fonts self-hosted via <code>next/font/google</code>. Story text ships in the bundle (~15 KB).</p></div></section>
+<section class="pl-block pl-callout"><div class="pl-callout-tone pl-tone-decision"><p><strong>Deterministic keyword parser, not NLP.</strong> Each story node declares keyword groups (<code>['left', 'west']</code>) that map to a reply and a next node. Global commands (HELP, STATUS, LOOK) are checked first. Unmatched input gets an in-fiction fallback ("say again? the signal is chewing your words"), so the game never breaks character. This keeps the campaign authorable, testable, and fully offline. If LLM-flavored dialogue ever becomes worth it, it would replace only fallback lines behind the same parser — no engine changes — but it is out of scope here.</p></div></section>
+<section class="pl-block pl-callout"><div class="pl-callout-tone pl-tone-decision"><p><strong>Ephemeral runs: you either win or lose.</strong> No localStorage, no CONTINUE, no mid-run checkpoints. A run ends rescued or lost; SIGNAL LOST returns to the title and the next run starts clean. The mitigations for losing a run are built into the design: the campaign is 15–20 minutes, the threat meter telegraphs danger before it maxes, and the overrun node offers one last-ditch escape before the lost ending.</p></div></section>
+<h3>Phase machine</h3>
+<section class="pl-block pl-diagram"><div class="pl-diagram"><div class="diagram-panel" style="display:flex;flex-direction:column;gap:16px">
+  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+    <div class="diagram-node">TITLE</div>
+    <span class="diagram-muted">START →</span>
+    <div class="diagram-node">INTRO CRAWL</div>
+    <span class="diagram-muted">ENTER →</span>
+    <div class="diagram-node">OS BOOT</div>
+    <span class="diagram-muted">auto →</span>
+    <div class="diagram-node">TERMINAL</div>
+  </div>
+  <div class="diagram-box" style="display:flex;flex-direction:column;gap:10px;padding:14px">
+    <span class="diagram-muted">inside TERMINAL — one loop per typed command</span>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <div class="diagram-card">input line</div>
+      <span class="diagram-muted">→</span>
+      <div class="diagram-card">parser: ending node? global cmds? node keywords?</div>
+      <span class="diagram-muted">→</span>
+      <div class="diagram-card">engine reducer (pure)</div>
+      <span class="diagram-muted">→</span>
+      <div class="diagram-card">next node + new log lines</div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <div class="diagram-pill">ending: rescued → new game</div>
+      <div class="diagram-pill">ending: lost → run over, back to title</div>
+    </div>
+  </div>
+</div></div><div class="pl-cap">Four phases; the terminal phase loops one reducer pass per typed command.</div></section>
+<h3>Story engine and data model</h3>
+<p>A story node is one cave chamber or story beat: the crew lines that arrive when it is entered, a <code>look</code> description for the global LOOK command, a <code>label</code> for the status bar, and the keyword matches that leave it. The reducer echoes the player line, short-circuits on ending nodes (rescued or lost, any input starts a fresh run — the Terminal also maps bare Enter on an ending node to the restart action), then tries global commands, then node keywords, applies any threat delta, and enters the next node.</p>
+<p>Threat is a 0–5 meter — noisy choices raise it, stealth choices lower it, and at 5 the engine jumps to the overrun node regardless of the route picked. Stats have explicit producers: <code>wrongTurns</code> increments on any match with a positive <code>threatDelta</code>, <code>closeCalls</code> on each threat overflow, elapsed time derives from <code>startedAt</code> (stamped when the terminal opens), and crew count is the constant 3.</p>
+<p>A graph-validation <code>bun test</code> asserts that every <code>match.next</code>, <code>START_ID</code>, and <code>OVERRUN_ID</code> resolve to real nodes and that both endings are reachable — a typo in act data fails the suite, not minute nineteen of a playthrough.</p>
+<section class="pl-block pl-tabs"><div class="pl-tabs"><div class="pl-tab"><div class="pl-tab-label">lib/game/types.ts</div><div class="pl-tab-body"><section class="pl-block pl-annotated"><div class="pl-code-head"><span class="pl-fname">lib/game/types.ts</span><span class="pl-spacer"></span><span class="pl-lang">ts</span></div><div class="pl-acode"><div class="pl-aline"><span class="pl-lineno">1</span><code><span class="hljs-keyword">export</span> <span class="hljs-keyword">type</span> <span class="hljs-title class_">Phase</span> = <span class="hljs-string">&#x27;title&#x27;</span> | <span class="hljs-string">&#x27;intro&#x27;</span> | <span class="hljs-string">&#x27;boot&#x27;</span> | <span class="hljs-string">&#x27;terminal&#x27;</span></code></div><div class="pl-aline"><span class="pl-lineno">2</span><code>&nbsp;</code></div><div class="pl-aline"><span class="pl-lineno">3</span><code><span class="hljs-keyword">export</span> <span class="hljs-keyword">type</span> <span class="hljs-title class_">GameAction</span> =</code></div><div class="pl-aline"><span class="pl-lineno">4</span><code>  | { <span class="hljs-attr">type</span>: <span class="hljs-string">&#x27;advance&#x27;</span>; <span class="hljs-attr">now</span>?: <span class="hljs-built_in">number</span> }</code></div><div class="pl-aline"><span class="pl-lineno">5</span><code>  | { <span class="hljs-attr">type</span>: <span class="hljs-string">&#x27;command&#x27;</span>; <span class="hljs-attr">input</span>: <span class="hljs-built_in">string</span> }</code></div><div class="pl-aline"><span class="pl-lineno">6</span><code>  | { <span class="hljs-attr">type</span>: <span class="hljs-string">&#x27;restart&#x27;</span> }</code></div><div class="pl-aline"><span class="pl-lineno">7</span><code>&nbsp;</code></div><div class="pl-aline"><span class="pl-lineno">8</span><code><span class="hljs-keyword">export</span> <span class="hljs-keyword">interface</span> <span class="hljs-title class_">TerminalLine</span> {</code></div><div class="pl-aline"><span class="pl-lineno">9</span><code>  <span class="hljs-attr">id</span>: <span class="hljs-built_in">number</span></code></div><div class="pl-aline"><span class="pl-lineno">10</span><code>  <span class="hljs-attr">from</span>: <span class="hljs-string">&#x27;system&#x27;</span> | <span class="hljs-string">&#x27;crew&#x27;</span> | <span class="hljs-string">&#x27;player&#x27;</span></code></div><div class="pl-aline"><span class="pl-lineno">11</span><code>  <span class="hljs-attr">text</span>: <span class="hljs-built_in">string</span></code></div><div class="pl-aline"><span class="pl-lineno">12</span><code>}</code></div><div class="pl-aline"><span class="pl-lineno">13</span><code>&nbsp;</code></div><div class="pl-aline"><span class="pl-lineno">14</span><code><span class="hljs-keyword">export</span> <span class="hljs-keyword">interface</span> <span class="hljs-title class_">CommandMatch</span> {</code></div><div class="pl-aline"><span class="pl-lineno">15</span><code>  <span class="hljs-attr">keywords</span>: <span class="hljs-built_in">string</span>[]</code></div><div class="pl-aline"><span class="pl-lineno">16</span><code>  <span class="hljs-attr">reply</span>: <span class="hljs-built_in">string</span></code></div><div class="pl-aline"><span class="pl-lineno">17</span><code>  <span class="hljs-attr">next</span>: <span class="hljs-built_in">string</span></code></div><div class="pl-aline"><span class="pl-lineno">18</span><code>  <span class="hljs-attr">threatDelta</span>?: <span class="hljs-built_in">number</span></code></div><div class="pl-aline"><span class="pl-lineno">19</span><code>}</code></div><div class="pl-aline"><span class="pl-lineno">20</span><code>&nbsp;</code></div><div class="pl-aline"><span class="pl-lineno">21</span><code><span class="hljs-keyword">export</span> <span class="hljs-keyword">interface</span> <span class="hljs-title class_">StoryNode</span> {</code></div><div class="pl-aline"><span class="pl-lineno">22</span><code>  <span class="hljs-attr">id</span>: <span class="hljs-built_in">string</span></code></div><div class="pl-aline"><span class="pl-lineno">23</span><code>  <span class="hljs-attr">label</span>: <span class="hljs-built_in">string</span></code></div><div class="pl-aline"><span class="pl-lineno">24</span><code>  <span class="hljs-attr">look</span>: <span class="hljs-built_in">string</span></code></div><div class="pl-aline"><span class="pl-lineno">25</span><code>  <span class="hljs-attr">entryLines</span>: <span class="hljs-built_in">string</span>[]</code></div><div class="pl-aline"><span class="pl-lineno">26</span><code>  <span class="hljs-attr">matches</span>: <span class="hljs-title class_">CommandMatch</span>[]</code></div><div class="pl-aline"><span class="pl-lineno">27</span><code>  <span class="hljs-attr">fallback</span>: <span class="hljs-built_in">string</span></code></div><div class="pl-aline"><span class="pl-lineno">28</span><code>  <span class="hljs-attr">ending</span>?: <span class="hljs-string">&#x27;rescued&#x27;</span> | <span class="hljs-string">&#x27;lost&#x27;</span></code></div><div class="pl-aline"><span class="pl-lineno">29</span><code>}</code></div><div class="pl-aline"><span class="pl-lineno">30</span><code>&nbsp;</code></div><div class="pl-aline"><span class="pl-lineno">31</span><code><span class="hljs-keyword">export</span> <span class="hljs-keyword">interface</span> <span class="hljs-title class_">GameState</span> {</code></div><div class="pl-aline"><span class="pl-lineno">32</span><code>  <span class="hljs-attr">phase</span>: <span class="hljs-title class_">Phase</span></code></div><div class="pl-aline"><span class="pl-lineno">33</span><code>  <span class="hljs-attr">nodeId</span>: <span class="hljs-built_in">string</span></code></div><div class="pl-aline"><span class="pl-lineno">34</span><code>  <span class="hljs-attr">threat</span>: <span class="hljs-built_in">number</span></code></div><div class="pl-aline"><span class="pl-lineno">35</span><code>  <span class="hljs-attr">lines</span>: <span class="hljs-title class_">TerminalLine</span>[]</code></div><div class="pl-aline"><span class="pl-lineno">36</span><code>  <span class="hljs-attr">nextId</span>: <span class="hljs-built_in">number</span></code></div><div class="pl-aline"><span class="pl-lineno">37</span><code>  <span class="hljs-attr">wrongTurns</span>: <span class="hljs-built_in">number</span></code></div><div class="pl-aline"><span class="pl-lineno">38</span><code>  <span class="hljs-attr">closeCalls</span>: <span class="hljs-built_in">number</span></code></div><div class="pl-aline"><span class="pl-lineno">39</span><code>  <span class="hljs-attr">startedAt</span>: <span class="hljs-built_in">number</span></code></div><div class="pl-aline"><span class="pl-lineno">40</span><code>}</code></div></div><ul class="pl-annotations"><li><span class="pl-pill">L3-6</span> <strong>Action contract</strong> Everything the UI can dispatch. game.tsx and terminal.tsx never touch GameState directly — only these three actions.</li><li><span class="pl-pill">L20-28</span> <strong>Story beat</strong> label feeds the status bar LOC pill; look serves the global LOOK command. Both exist before content is authored so 15 nodes never need a schema migration. Ending nodes terminate the run.</li><li><span class="pl-pill">L14-18</span> <strong>Route edge</strong> Keyword group to reply and next node. threatDelta is the stealth or noise cost of the choice.</li><li><span class="pl-pill">L30-39</span> Single immutable state object — no persistence anywhere. wrongTurns, closeCalls, and startedAt produce the end-of-run stats; crew count is the constant 3.</li></ul></section></div></div><div class="pl-tab"><div class="pl-tab-label">lib/game/engine.ts</div><div class="pl-tab-body"><section class="pl-block pl-annotated"><div class="pl-code-head"><span class="pl-fname">lib/game/engine.ts</span><span class="pl-spacer"></span><span class="pl-lang">ts</span></div><div class="pl-acode"><div class="pl-aline"><span class="pl-lineno">1</span><code><span class="hljs-keyword">import</span> { findNode, <span class="hljs-variable constant_">OVERRUN_ID</span>, <span class="hljs-variable constant_">START_ID</span> } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;./story&#x27;</span></code></div><div class="pl-aline"><span class="pl-lineno">2</span><code><span class="hljs-keyword">import</span> { matchNode, globalReply } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;./parser&#x27;</span></code></div><div class="pl-aline"><span class="pl-lineno">3</span><code><span class="hljs-keyword">import</span> <span class="hljs-keyword">type</span> { <span class="hljs-title class_">GameAction</span>, <span class="hljs-title class_">GameState</span>, <span class="hljs-title class_">Phase</span>, <span class="hljs-title class_">StoryNode</span>, <span class="hljs-title class_">TerminalLine</span> } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;./types&#x27;</span></code></div><div class="pl-aline"><span class="pl-lineno">4</span><code>&nbsp;</code></div><div class="pl-aline"><span class="pl-lineno">5</span><code><span class="hljs-keyword">const</span> append = (<span class="hljs-attr">s</span>: <span class="hljs-title class_">GameState</span>, <span class="hljs-attr">from</span>: <span class="hljs-title class_">TerminalLine</span>[<span class="hljs-string">&#x27;from&#x27;</span>], <span class="hljs-attr">text</span>: <span class="hljs-built_in">string</span>): <span class="hljs-function"><span class="hljs-params">GameState</span> =&gt;</span> ({</code></div><div class="pl-aline"><span class="pl-lineno">6</span><code>  ...s,</code></div><div class="pl-aline"><span class="pl-lineno">7</span><code>  <span class="hljs-attr">lines</span>: [...s.<span class="hljs-property">lines</span>, { <span class="hljs-attr">id</span>: s.<span class="hljs-property">nextId</span>, <span class="hljs-keyword">from</span>, text }],</code></div><div class="pl-aline"><span class="pl-lineno">8</span><code>  <span class="hljs-attr">nextId</span>: s.<span class="hljs-property">nextId</span> + <span class="hljs-number">1</span>,</code></div><div class="pl-aline"><span class="pl-lineno">9</span><code>})</code></div><div class="pl-aline"><span class="pl-lineno">10</span><code>&nbsp;</code></div><div class="pl-aline"><span class="pl-lineno">11</span><code><span class="hljs-keyword">const</span> enterNode = (<span class="hljs-attr">s</span>: <span class="hljs-title class_">GameState</span>, <span class="hljs-attr">node</span>: <span class="hljs-title class_">StoryNode</span>): <span class="hljs-function"><span class="hljs-params">GameState</span> =&gt;</span></code></div><div class="pl-aline"><span class="pl-lineno">12</span><code>  node.<span class="hljs-property">entryLines</span>.<span class="hljs-title function_">reduce</span>(</code></div><div class="pl-aline"><span class="pl-lineno">13</span><code>    (acc, line) =&gt; <span class="hljs-title function_">append</span>(acc, <span class="hljs-string">&#x27;crew&#x27;</span>, line),</code></div><div class="pl-aline"><span class="pl-lineno">14</span><code>    { ...s, <span class="hljs-attr">nodeId</span>: node.<span class="hljs-property">id</span> },</code></div><div class="pl-aline"><span class="pl-lineno">15</span><code>  )</code></div><div class="pl-aline"><span class="pl-lineno">16</span><code>&nbsp;</code></div><div class="pl-aline"><span class="pl-lineno">17</span><code><span class="hljs-keyword">const</span> bumpThreat = (<span class="hljs-attr">s</span>: <span class="hljs-title class_">GameState</span>, delta = <span class="hljs-number">0</span>): <span class="hljs-function"><span class="hljs-params">GameState</span> =&gt;</span> {</code></div><div class="pl-aline"><span class="pl-lineno">18</span><code>  <span class="hljs-keyword">const</span> threat = <span class="hljs-title class_">Math</span>.<span class="hljs-title function_">min</span>(<span class="hljs-number">5</span>, <span class="hljs-title class_">Math</span>.<span class="hljs-title function_">max</span>(<span class="hljs-number">0</span>, s.<span class="hljs-property">threat</span> + delta))</code></div><div class="pl-aline"><span class="pl-lineno">19</span><code>  <span class="hljs-keyword">if</span> (threat &lt; <span class="hljs-number">5</span>) <span class="hljs-keyword">return</span> { ...s, threat }</code></div><div class="pl-aline"><span class="pl-lineno">20</span><code>  <span class="hljs-keyword">return</span> <span class="hljs-title function_">enterNode</span>({ ...s, <span class="hljs-attr">threat</span>: <span class="hljs-number">3</span>, <span class="hljs-attr">closeCalls</span>: s.<span class="hljs-property">closeCalls</span> + <span class="hljs-number">1</span> }, <span class="hljs-title function_">findNode</span>(<span class="hljs-variable constant_">OVERRUN_ID</span>))</code></div><div class="pl-aline"><span class="pl-lineno">21</span><code>}</code></div><div class="pl-aline"><span class="pl-lineno">22</span><code>&nbsp;</code></div><div class="pl-aline"><span class="pl-lineno">23</span><code><span class="hljs-keyword">const</span> applyCommand = (<span class="hljs-attr">s</span>: <span class="hljs-title class_">GameState</span>, <span class="hljs-attr">raw</span>: <span class="hljs-built_in">string</span>): <span class="hljs-function"><span class="hljs-params">GameState</span> =&gt;</span> {</code></div><div class="pl-aline"><span class="pl-lineno">24</span><code>  <span class="hljs-keyword">const</span> input = raw.<span class="hljs-title function_">trim</span>().<span class="hljs-title function_">toLowerCase</span>()</code></div><div class="pl-aline"><span class="pl-lineno">25</span><code>  <span class="hljs-keyword">if</span> (input === <span class="hljs-string">&#x27;&#x27;</span>) <span class="hljs-keyword">return</span> s</code></div><div class="pl-aline"><span class="pl-lineno">26</span><code>  <span class="hljs-keyword">const</span> echoed = <span class="hljs-title function_">append</span>(s, <span class="hljs-string">&#x27;player&#x27;</span>, raw.<span class="hljs-title function_">trim</span>())</code></div><div class="pl-aline"><span class="pl-lineno">27</span><code>  <span class="hljs-keyword">const</span> node = <span class="hljs-title function_">findNode</span>(echoed.<span class="hljs-property">nodeId</span>)</code></div><div class="pl-aline"><span class="pl-lineno">28</span><code>  <span class="hljs-keyword">if</span> (node.<span class="hljs-property">ending</span>) <span class="hljs-keyword">return</span> initialState</code></div><div class="pl-aline"><span class="pl-lineno">29</span><code>  <span class="hljs-keyword">const</span> <span class="hljs-variable language_">global</span> = <span class="hljs-title function_">globalReply</span>(echoed, input)</code></div><div class="pl-aline"><span class="pl-lineno">30</span><code>  <span class="hljs-keyword">if</span> (<span class="hljs-variable language_">global</span>) <span class="hljs-keyword">return</span> <span class="hljs-variable language_">global</span></code></div><div class="pl-aline"><span class="pl-lineno">31</span><code>  <span class="hljs-keyword">const</span> match = <span class="hljs-title function_">matchNode</span>(node, input)</code></div><div class="pl-aline"><span class="pl-lineno">32</span><code>  <span class="hljs-keyword">if</span> (!match) <span class="hljs-keyword">return</span> <span class="hljs-title function_">append</span>(echoed, <span class="hljs-string">&#x27;crew&#x27;</span>, node.<span class="hljs-property">fallback</span>)</code></div><div class="pl-aline"><span class="pl-lineno">33</span><code>  <span class="hljs-keyword">const</span> wrongTurns = (match.<span class="hljs-property">threatDelta</span> ?? <span class="hljs-number">0</span>) &gt; <span class="hljs-number">0</span> ? echoed.<span class="hljs-property">wrongTurns</span> + <span class="hljs-number">1</span> : echoed.<span class="hljs-property">wrongTurns</span></code></div><div class="pl-aline"><span class="pl-lineno">34</span><code>  <span class="hljs-keyword">const</span> replied = <span class="hljs-title function_">append</span>({ ...echoed, wrongTurns }, <span class="hljs-string">&#x27;crew&#x27;</span>, match.<span class="hljs-property">reply</span>)</code></div><div class="pl-aline"><span class="pl-lineno">35</span><code>  <span class="hljs-keyword">const</span> after = <span class="hljs-title function_">bumpThreat</span>(replied, match.<span class="hljs-property">threatDelta</span>)</code></div><div class="pl-aline"><span class="pl-lineno">36</span><code>  <span class="hljs-keyword">return</span> after.<span class="hljs-property">nodeId</span> !== replied.<span class="hljs-property">nodeId</span> ? after : <span class="hljs-title function_">enterNode</span>(after, <span class="hljs-title function_">findNode</span>(match.<span class="hljs-property">next</span>))</code></div><div class="pl-aline"><span class="pl-lineno">37</span><code>}</code></div><div class="pl-aline"><span class="pl-lineno">38</span><code>&nbsp;</code></div><div class="pl-aline"><span class="pl-lineno">39</span><code><span class="hljs-keyword">const</span> <span class="hljs-attr">PHASE_ORDER</span>: <span class="hljs-title class_">Phase</span>[] = [<span class="hljs-string">&#x27;title&#x27;</span>, <span class="hljs-string">&#x27;intro&#x27;</span>, <span class="hljs-string">&#x27;boot&#x27;</span>, <span class="hljs-string">&#x27;terminal&#x27;</span>]</code></div><div class="pl-aline"><span class="pl-lineno">40</span><code>&nbsp;</code></div><div class="pl-aline"><span class="pl-lineno">41</span><code><span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> <span class="hljs-attr">initialState</span>: <span class="hljs-title class_">GameState</span> = {</code></div><div class="pl-aline"><span class="pl-lineno">42</span><code>  <span class="hljs-attr">phase</span>: <span class="hljs-string">&#x27;title&#x27;</span>, <span class="hljs-attr">nodeId</span>: <span class="hljs-variable constant_">START_ID</span>, <span class="hljs-attr">threat</span>: <span class="hljs-number">0</span>,</code></div><div class="pl-aline"><span class="pl-lineno">43</span><code>  <span class="hljs-attr">lines</span>: [], <span class="hljs-attr">nextId</span>: <span class="hljs-number">0</span>, <span class="hljs-attr">wrongTurns</span>: <span class="hljs-number">0</span>, <span class="hljs-attr">closeCalls</span>: <span class="hljs-number">0</span>, <span class="hljs-attr">startedAt</span>: <span class="hljs-number">0</span>,</code></div><div class="pl-aline"><span class="pl-lineno">44</span><code>}</code></div><div class="pl-aline"><span class="pl-lineno">45</span><code>&nbsp;</code></div><div class="pl-aline"><span class="pl-lineno">46</span><code><span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> gameReducer = (<span class="hljs-attr">s</span>: <span class="hljs-title class_">GameState</span>, <span class="hljs-attr">action</span>: <span class="hljs-title class_">GameAction</span>): <span class="hljs-function"><span class="hljs-params">GameState</span> =&gt;</span> {</code></div><div class="pl-aline"><span class="pl-lineno">47</span><code>  <span class="hljs-keyword">if</span> (action.<span class="hljs-property">type</span> === <span class="hljs-string">&#x27;command&#x27;</span>) <span class="hljs-keyword">return</span> <span class="hljs-title function_">applyCommand</span>(s, action.<span class="hljs-property">input</span>)</code></div><div class="pl-aline"><span class="pl-lineno">48</span><code>  <span class="hljs-keyword">if</span> (action.<span class="hljs-property">type</span> === <span class="hljs-string">&#x27;restart&#x27;</span>) <span class="hljs-keyword">return</span> initialState</code></div><div class="pl-aline"><span class="pl-lineno">49</span><code>  <span class="hljs-keyword">const</span> phase = <span class="hljs-variable constant_">PHASE_ORDER</span>[<span class="hljs-title class_">Math</span>.<span class="hljs-title function_">min</span>(<span class="hljs-variable constant_">PHASE_ORDER</span>.<span class="hljs-title function_">indexOf</span>(s.<span class="hljs-property">phase</span>) + <span class="hljs-number">1</span>, <span class="hljs-number">3</span>)]</code></div><div class="pl-aline"><span class="pl-lineno">50</span><code>  <span class="hljs-keyword">if</span> (phase !== <span class="hljs-string">&#x27;terminal&#x27;</span>) <span class="hljs-keyword">return</span> { ...s, phase }</code></div><div class="pl-aline"><span class="pl-lineno">51</span><code>  <span class="hljs-keyword">return</span> <span class="hljs-title function_">enterNode</span>({ ...s, phase, <span class="hljs-attr">startedAt</span>: action.<span class="hljs-property">now</span> ?? <span class="hljs-number">0</span> }, <span class="hljs-title function_">findNode</span>(<span class="hljs-variable constant_">START_ID</span>))</code></div><div class="pl-aline"><span class="pl-lineno">52</span><code>}</code></div></div><ul class="pl-annotations"><li><span class="pl-pill">L23-38</span> <strong>One command, one pass</strong> Echo the player line, short-circuit ending nodes, try global commands, then node keywords; the fallback keeps the fiction when nothing matches. wrongTurns counts noisy choices.</li><li><span class="pl-pill">L28</span> <strong>Ephemeral endings</strong> On a rescued or lost node, any typed input returns a fresh initialState — the whole run evaporates. Terminal also maps bare Enter here to the restart action.</li><li><span class="pl-pill">L36-37</span> <strong>Overflow detection</strong> bumpThreat jumping to overrun CHANGES nodeId, so comparing against replied.nodeId detects the jump — and a player already standing in overrun can still escape via match.next. Unit-tested in the engine stage.</li><li><span class="pl-pill">L47-53</span> <strong>Reducer contract</strong> The exact function game.tsx wires into useReducer; advance carries a timestamp so the elapsed stat has a producer.</li></ul></section></div></div><div class="pl-tab"><div class="pl-tab-label">lib/game/story/act1.ts</div><div class="pl-tab-body"><section class="pl-block pl-annotated"><div class="pl-code-head"><span class="pl-fname">lib/game/story/act1.ts</span><span class="pl-spacer"></span><span class="pl-lang">ts</span></div><div class="pl-acode"><div class="pl-aline"><span class="pl-lineno">1</span><code><span class="hljs-keyword">import</span> <span class="hljs-keyword">type</span> { <span class="hljs-title class_">StoryNode</span> } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;../types&#x27;</span></code></div><div class="pl-aline"><span class="pl-lineno">2</span><code>&nbsp;</code></div><div class="pl-aline"><span class="pl-lineno">3</span><code><span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> <span class="hljs-attr">act1</span>: <span class="hljs-title class_">StoryNode</span>[] = [</code></div><div class="pl-aline"><span class="pl-lineno">4</span><code>  {</code></div><div class="pl-aline"><span class="pl-lineno">5</span><code>    <span class="hljs-attr">id</span>: <span class="hljs-string">&#x27;crash-site&#x27;</span>,</code></div><div class="pl-aline"><span class="pl-lineno">6</span><code>    <span class="hljs-attr">label</span>: <span class="hljs-string">&#x27;CRASH SITE&#x27;</span>,</code></div><div class="pl-aline"><span class="pl-lineno">7</span><code>    <span class="hljs-attr">look</span>: <span class="hljs-string">&#x27;HALLORAN: a tilted cargo bay, half buried. storm howling outside. two passages — one level, one sloping down.&#x27;</span>,</code></div><div class="pl-aline"><span class="pl-lineno">8</span><code>    <span class="hljs-attr">entryLines</span>: [</code></div><div class="pl-aline"><span class="pl-lineno">9</span><code>      <span class="hljs-string">&#x27;HALLORAN: we are down. ship split on impact. we crawled into the cave to escape the storm.&#x27;</span>,</code></div><div class="pl-aline"><span class="pl-lineno">10</span><code>      <span class="hljs-string">&#x27;HALLORAN: emergency lamp is dying. two passages ahead. one slopes down, one stays level.&#x27;</span>,</code></div><div class="pl-aline"><span class="pl-lineno">11</span><code>    ],</code></div><div class="pl-aline"><span class="pl-lineno">12</span><code>    <span class="hljs-attr">matches</span>: [</code></div><div class="pl-aline"><span class="pl-lineno">13</span><code>      { <span class="hljs-attr">keywords</span>: [<span class="hljs-string">&#x27;level&#x27;</span>, <span class="hljs-string">&#x27;straight&#x27;</span>, <span class="hljs-string">&#x27;ahead&#x27;</span>], <span class="hljs-attr">reply</span>: <span class="hljs-string">&#x27;HALLORAN: ok. taking the level passage. the floor is wet here.&#x27;</span>, <span class="hljs-attr">next</span>: <span class="hljs-string">&#x27;river-gallery&#x27;</span> },</code></div><div class="pl-aline"><span class="pl-lineno">14</span><code>      { <span class="hljs-attr">keywords</span>: [<span class="hljs-string">&#x27;down&#x27;</span>, <span class="hljs-string">&#x27;slope&#x27;</span>, <span class="hljs-string">&#x27;lower&#x27;</span>], <span class="hljs-attr">reply</span>: <span class="hljs-string">&#x27;HALLORAN: heading down. it is warmer this way. that smell…&#x27;</span>, <span class="hljs-attr">next</span>: <span class="hljs-string">&#x27;nest-approach&#x27;</span>, <span class="hljs-attr">threatDelta</span>: <span class="hljs-number">1</span> },</code></div><div class="pl-aline"><span class="pl-lineno">15</span><code>    ],</code></div><div class="pl-aline"><span class="pl-lineno">16</span><code>    <span class="hljs-attr">fallback</span>: <span class="hljs-string">&#x27;HALLORAN: say again? the signal is chewing your words. the level passage, or the slope?&#x27;</span>,</code></div><div class="pl-aline"><span class="pl-lineno">17</span><code>  },</code></div><div class="pl-aline"><span class="pl-lineno">18</span><code>]</code></div></div><ul class="pl-annotations"><li><span class="pl-pill">L12-15</span> <strong>Authoring format</strong> Routes are plain data — adding a chamber is adding an object, no engine changes.</li><li><span class="pl-pill">L6-7</span> <strong>label + look</strong> label shows in the status bar LOC pill; look answers the global LOOK command in this chamber.</li><li><span class="pl-pill">L16</span> Fallbacks restate the choice in-fiction so an unmatched reply never dead-ends the player.</li></ul></section></div></div><div class="pl-tab"><div class="pl-tab-label">hooks/use-typewriter.ts</div><div class="pl-tab-body"><section class="pl-block pl-annotated"><div class="pl-code-head"><span class="pl-fname">hooks/use-typewriter.ts</span><span class="pl-spacer"></span><span class="pl-lang">ts</span></div><div class="pl-acode"><div class="pl-aline"><span class="pl-lineno">1</span><code><span class="hljs-string">&#x27;use client&#x27;</span></code></div><div class="pl-aline"><span class="pl-lineno">2</span><code>&nbsp;</code></div><div class="pl-aline"><span class="pl-lineno">3</span><code><span class="hljs-keyword">import</span> { useEffect, useState } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;react&#x27;</span></code></div><div class="pl-aline"><span class="pl-lineno">4</span><code>&nbsp;</code></div><div class="pl-aline"><span class="pl-lineno">5</span><code><span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> <span class="hljs-title function_">useTypewriter</span> = (<span class="hljs-params"><span class="hljs-attr">text</span>: <span class="hljs-built_in">string</span>, speedMs = <span class="hljs-number">24</span></span>) =&gt; {</code></div><div class="pl-aline"><span class="pl-lineno">6</span><code>  <span class="hljs-keyword">const</span> [count, setCount] = <span class="hljs-title function_">useState</span>(<span class="hljs-number">0</span>)</code></div><div class="pl-aline"><span class="pl-lineno">7</span><code>  <span class="hljs-keyword">const</span> done = count &gt;= text.<span class="hljs-property">length</span></code></div><div class="pl-aline"><span class="pl-lineno">8</span><code>  <span class="hljs-title function_">useEffect</span>(<span class="hljs-function">() =&gt;</span> {</code></div><div class="pl-aline"><span class="pl-lineno">9</span><code>    <span class="hljs-title function_">setCount</span>(<span class="hljs-number">0</span>)</code></div><div class="pl-aline"><span class="pl-lineno">10</span><code>  }, [text])</code></div><div class="pl-aline"><span class="pl-lineno">11</span><code>  <span class="hljs-title function_">useEffect</span>(<span class="hljs-function">() =&gt;</span> {</code></div><div class="pl-aline"><span class="pl-lineno">12</span><code>    <span class="hljs-keyword">if</span> (done) <span class="hljs-keyword">return</span></code></div><div class="pl-aline"><span class="pl-lineno">13</span><code>    <span class="hljs-keyword">const</span> id = <span class="hljs-built_in">setInterval</span>(<span class="hljs-function">() =&gt;</span> <span class="hljs-title function_">setCount</span>(<span class="hljs-function">(<span class="hljs-params">c</span>) =&gt;</span> c + <span class="hljs-number">1</span>), speedMs)</code></div><div class="pl-aline"><span class="pl-lineno">14</span><code>    <span class="hljs-keyword">return</span> <span class="hljs-function">() =&gt;</span> <span class="hljs-built_in">clearInterval</span>(id)</code></div><div class="pl-aline"><span class="pl-lineno">15</span><code>  }, [done, text, speedMs])</code></div><div class="pl-aline"><span class="pl-lineno">16</span><code>  <span class="hljs-keyword">return</span> { <span class="hljs-attr">visible</span>: text.<span class="hljs-title function_">slice</span>(<span class="hljs-number">0</span>, count), done, <span class="hljs-attr">skip</span>: <span class="hljs-function">() =&gt;</span> <span class="hljs-title function_">setCount</span>(text.<span class="hljs-property">length</span>) }</code></div><div class="pl-aline"><span class="pl-lineno">17</span><code>}</code></div></div><ul class="pl-annotations"><li><span class="pl-pill">L11-15</span> <strong>Self-clearing</strong> The interval tears down when done flips — no timer runs while text is fully revealed.</li><li><span class="pl-pill">L16</span> skip() powers Enter-to-reveal on the intro, boot, and terminal replies.</li></ul></section></div></div><div class="pl-tab"><div class="pl-tab-label">components/game/game.tsx</div><div class="pl-tab-body"><section class="pl-block pl-annotated"><div class="pl-code-head"><span class="pl-fname">components/game/game.tsx</span><span class="pl-spacer"></span><span class="pl-lang">tsx</span></div><div class="pl-acode"><div class="pl-aline"><span class="pl-lineno">1</span><code><span class="hljs-string">&#x27;use client&#x27;</span></code></div><div class="pl-aline"><span class="pl-lineno">2</span><code>&nbsp;</code></div><div class="pl-aline"><span class="pl-lineno">3</span><code><span class="hljs-keyword">import</span> { useReducer } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;react&#x27;</span></code></div><div class="pl-aline"><span class="pl-lineno">4</span><code><span class="hljs-keyword">import</span> { <span class="hljs-title class_">TitleScreen</span> } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;./title-screen&#x27;</span></code></div><div class="pl-aline"><span class="pl-lineno">5</span><code><span class="hljs-keyword">import</span> { <span class="hljs-title class_">IntroCrawl</span> } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;./intro-crawl&#x27;</span></code></div><div class="pl-aline"><span class="pl-lineno">6</span><code><span class="hljs-keyword">import</span> { <span class="hljs-title class_">BootSequence</span> } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;./boot-sequence&#x27;</span></code></div><div class="pl-aline"><span class="pl-lineno">7</span><code><span class="hljs-keyword">import</span> { <span class="hljs-title class_">Terminal</span> } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;./terminal&#x27;</span></code></div><div class="pl-aline"><span class="pl-lineno">8</span><code><span class="hljs-keyword">import</span> { gameReducer, initialState } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;@/lib/game&#x27;</span></code></div><div class="pl-aline"><span class="pl-lineno">9</span><code>&nbsp;</code></div><div class="pl-aline"><span class="pl-lineno">10</span><code><span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> <span class="hljs-title function_">Game</span> = (<span class="hljs-params"></span>) =&gt; {</code></div><div class="pl-aline"><span class="pl-lineno">11</span><code>  <span class="hljs-keyword">const</span> [state, dispatch] = <span class="hljs-title function_">useReducer</span>(gameReducer, initialState)</code></div><div class="pl-aline"><span class="pl-lineno">12</span><code>  <span class="hljs-keyword">if</span> (state.<span class="hljs-property">phase</span> === <span class="hljs-string">&#x27;title&#x27;</span>) <span class="hljs-keyword">return</span> <span class="language-xml"><span class="hljs-tag">&lt;<span class="hljs-name">TitleScreen</span> <span class="hljs-attr">onStart</span>=<span class="hljs-string">{()</span> =&gt;</span> dispatch({ type: &#x27;advance&#x27; })} /&gt;</span></code></div><div class="pl-aline"><span class="pl-lineno">13</span><code>  <span class="hljs-keyword">if</span> (state.<span class="hljs-property">phase</span> === <span class="hljs-string">&#x27;intro&#x27;</span>) <span class="hljs-keyword">return</span> <span class="language-xml"><span class="hljs-tag">&lt;<span class="hljs-name">IntroCrawl</span> <span class="hljs-attr">onDone</span>=<span class="hljs-string">{()</span> =&gt;</span> dispatch({ type: &#x27;advance&#x27; })} /&gt;</span></code></div><div class="pl-aline"><span class="pl-lineno">14</span><code>  <span class="hljs-keyword">if</span> (state.<span class="hljs-property">phase</span> === <span class="hljs-string">&#x27;boot&#x27;</span>) <span class="hljs-keyword">return</span> <span class="language-xml"><span class="hljs-tag">&lt;<span class="hljs-name">BootSequence</span> <span class="hljs-attr">onDone</span>=<span class="hljs-string">{()</span> =&gt;</span> dispatch({ type: &#x27;advance&#x27;, now: Date.now() })} /&gt;</span></code></div><div class="pl-aline"><span class="pl-lineno">15</span><code>  <span class="hljs-keyword">return</span> <span class="language-xml"><span class="hljs-tag">&lt;<span class="hljs-name">Terminal</span> <span class="hljs-attr">state</span>=<span class="hljs-string">{state}</span> <span class="hljs-attr">dispatch</span>=<span class="hljs-string">{dispatch}</span> /&gt;</span></span></code></div><div class="pl-aline"><span class="pl-lineno">16</span><code>}</code></div></div><ul class="pl-annotations"><li><span class="pl-pill">L10-16</span> <strong>Phase router</strong> The single client boundary. app/page.tsx stays a one-line server component that renders &lt;Game /&gt;. The boot handler stamps startedAt for the elapsed stat.</li></ul></section></div></div></div></section>
+<h3>Files</h3>
+<section class="pl-block pl-filetree"><div class="pl-cap">Files touched</div><ul class="pl-filetree"><li><code>app/layout.tsx</code> <span class="pl-badge pl-modified">modified</span><span class="pl-note">Swap Geist fonts for Press Start 2P + VT323; game metadata</span></li><li><code>app/page.tsx</code> <span class="pl-badge pl-modified">modified</span><span class="pl-note">Boilerplate replaced with &lt;Game /&gt;</span></li><li><code>app/globals.css</code> <span class="pl-badge pl-modified">modified</span><span class="pl-note">CRT tokens, scanlines, glow, starfield keyframes, reduced-motion guards</span></li><li><code>components/game/game.tsx</code> <span class="pl-badge pl-added">added</span><span class="pl-note">Phase router over gameReducer (client entry)</span></li><li><code>components/game/title-screen.tsx</code> <span class="pl-badge pl-added">added</span><span class="pl-note">Attract mode — every visit starts fresh</span></li><li><code>components/game/intro-crawl.tsx</code> <span class="pl-badge pl-added">added</span></li><li><code>components/game/boot-sequence.tsx</code> <span class="pl-badge pl-added">added</span><span class="pl-note">Ships the boot-demo.html homage as React + boot-script data</span></li><li><code>components/game/terminal.tsx</code> <span class="pl-badge pl-added">added</span><span class="pl-note">Log + input + status bar</span></li><li><code>components/game/starfield.tsx</code> <span class="pl-badge pl-added">added</span><span class="pl-note">CSS star layers, shared by title screen</span></li><li><code>components/game/index.ts</code> <span class="pl-badge pl-added">added</span><span class="pl-note">Barrel</span></li><li><code>lib/game/types.ts</code> <span class="pl-badge pl-added">added</span><span class="pl-note">Phase, GameAction, StoryNode, GameState</span></li><li><code>lib/game/engine.ts</code> <span class="pl-badge pl-added">added</span><span class="pl-note">gameReducer, applyCommand, initialState — all pure</span></li><li><code>lib/game/parser.ts</code> <span class="pl-badge pl-added">added</span><span class="pl-note">Keyword matching + HELP / STATUS / LOOK</span></li><li><code>lib/game/boot-script.ts</code> <span class="pl-badge pl-added">added</span><span class="pl-note">Boot sequence lines as data — sourced from boot-demo.html</span></li><li><code>lib/game/story/act1.ts</code> <span class="pl-badge pl-added">added</span><span class="pl-note">Act 1 — Contact (~4 nodes)</span></li><li><code>lib/game/story/act2.ts</code> <span class="pl-badge pl-added">added</span><span class="pl-note">Act 2 — The Hunt (~6 nodes)</span></li><li><code>lib/game/story/act3.ts</code> <span class="pl-badge pl-added">added</span><span class="pl-note">Act 3 — Ascent (~5 nodes)</span></li><li><code>lib/game/story/endings.ts</code> <span class="pl-badge pl-added">added</span><span class="pl-note">overrun, signal-lost, and rescued nodes</span></li><li><code>lib/game/story/index.ts</code> <span class="pl-badge pl-added">added</span><span class="pl-note">findNode lookup + START_ID / OVERRUN_ID constants</span></li><li><code>lib/game/index.ts</code> <span class="pl-badge pl-added">added</span><span class="pl-note">Barrel</span></li><li><code>hooks/use-typewriter.ts</code> <span class="pl-badge pl-added">added</span></li><li><code>hooks/index.ts</code> <span class="pl-badge pl-added">added</span><span class="pl-note">Barrel</span></li></ul></section>
+<h3>Campaign content</h3>
+<section class="pl-block pl-table"><table><thead><tr><th>Act</th><th>Setting</th><th>Beats</th><th>Nodes</th></tr></thead><tbody><tr><td>1 · Contact</td><td>Crash site, first passages</td><td>Establish the relay, teach HELP/STATUS/LOOK, first route choice, first hint of the creature</td><td>~4</td></tr><tr><td>2 · The Hunt</td><td>Flooded galleries, the nest</td><td>Creature is aware; hide/run/quiet choices drive the threat meter</td><td>~6</td></tr><tr><td>3 · Ascent</td><td>Lava tubes toward the surface</td><td>Route to open sky, flare signal, extraction — plus the shared overrun and ending nodes</td><td>~5</td></tr></tbody></table></section>
+<p>Each act is one data file under <code>lib/game/story/</code>; if an act outgrows the 150-line cap (Act 2 is the likely one once <code>look</code> and <code>label</code> land on every node), it splits by chamber and the <code>story/</code> barrel keeps <code>findNode</code> oblivious. Dialogue is written lowercase-panicked for the crew and clipped-formal for ship systems — the two voices carry the tension since there are no visuals.</p>
+<h3>Visual treatment</h3>
+<p>Two self-hosted Google fonts: <strong>Press Start 2P</strong> for the title and headers (<code>--font-pixel</code>), <strong>VT323</strong> for all terminal text (<code>--font-terminal</code>) — swapped into <code>app/layout.tsx</code> in place of the Geist pair. The CRT look lives entirely in <code>app/globals.css</code>, and the boot screen follows the late-80s/early-90s BIOS homage proven out in <code>boot-demo.html</code>: white VGA text on black, staged line reveals, a memory-test count-up, "Detecting…" probes that resolve after a beat, and the Deep Range Star badge.</p>
+<section class="pl-block pl-code"><div class="pl-code-head"><span class="pl-fname">app/globals.css</span><span class="pl-spacer"></span><span class="pl-lang">css</span></div><pre class="hljs"><code><span class="hljs-selector-pseudo">:root</span> {
+  <span class="hljs-attr">--crt-bg</span>: <span class="hljs-number">#030905</span>;
+  <span class="hljs-attr">--crt-ink</span>: <span class="hljs-number">#49f770</span>;
+  <span class="hljs-attr">--crt-dim</span>: <span class="hljs-number">#1d7a3a</span>;
+  <span class="hljs-attr">--crt-warn</span>: <span class="hljs-number">#ffb347</span>;
+  <span class="hljs-attr">--crt-alert</span>: <span class="hljs-number">#ff4f4f</span>;
+  <span class="hljs-attr">--crt-bios</span>: <span class="hljs-number">#e4e4e4</span>;
+}
+
+<span class="hljs-selector-class">.crt</span><span class="hljs-selector-pseudo">::after</span> {
+  <span class="hljs-attribute">content</span>: <span class="hljs-string">&#x27;&#x27;</span>;
+  <span class="hljs-attribute">position</span>: fixed;
+  <span class="hljs-attribute">inset</span>: <span class="hljs-number">0</span>;
+  <span class="hljs-attribute">pointer-events</span>: none;
+  <span class="hljs-attribute">background</span>: <span class="hljs-built_in">repeating-linear-gradient</span>(<span class="hljs-number">0deg</span>, transparent <span class="hljs-number">0</span> <span class="hljs-number">2px</span>, <span class="hljs-built_in">rgb</span>(<span class="hljs-number">0</span> <span class="hljs-number">0</span> <span class="hljs-number">0</span> / <span class="hljs-number">18%</span>) <span class="hljs-number">2px</span> <span class="hljs-number">4px</span>);
+}
+
+<span class="hljs-selector-class">.crt-glow</span> {
+  <span class="hljs-attribute">text-shadow</span>: <span class="hljs-number">0</span> <span class="hljs-number">0</span> <span class="hljs-number">6px</span> <span class="hljs-built_in">color-mix</span>(in srgb, <span class="hljs-built_in">var</span>(--crt-ink) <span class="hljs-number">55%</span>, transparent);
+}
+
+<span class="hljs-keyword">@media</span> (<span class="hljs-attribute">prefers-reduced-motion</span>: reduce) {
+  <span class="hljs-selector-class">.starfield</span> <span class="hljs-selector-tag">span</span>, <span class="hljs-selector-class">.crt-flicker</span>, <span class="hljs-selector-class">.cursor-blink</span> {
+    <span class="hljs-attribute">animation</span>: none;
+  }
+}</code></pre><div class="pl-cap">Planned additions — phosphor palette, scanline overlay, reduced-motion guards.</div></section>
+<p>The boot phase renders in BIOS white (<code>--crt-bios</code>) for authenticity, then the terminal phase switches to phosphor green — the palette shift doubles as a story beat: the ship's general OS hands off to the comms relay.</p>
+<p>Accessibility is designed in, not bolted on: the terminal log is an <code>aria-live="polite"</code> region, the input is labeled and keeps focus for the whole game, every screen advances by keyboard alone, and <code>prefers-reduced-motion</code> disables flicker, starfield drift, and cursor blink while keeping the typewriter skippable via Enter. Log lines render as text nodes — never <code>dangerouslySetInnerHTML</code> — so story content can never inject markup.</p>
+<section class="pl-block pl-callout"><div class="pl-callout-tone pl-tone-risk"><p>VT323 gets hard to read small and pure-green-on-black can fail contrast at low weights. Mitigation: minimum 18px terminal text, contrast-check <code>--crt-ink</code> against <code>--crt-bg</code> (target ≥ 7:1), and run the <code>ada-wcag-compliance</code> audit before shipping.</p></div></section>
+<section class="pl-block pl-callout"><div class="pl-callout-tone pl-tone-risk"><p>A naive per-character <code>setState</code> across a long log can jank. Mitigation: only the newest line animates (older lines render as plain text), one interval at a time via <code>use-typewriter</code>, and Enter instantly reveals. If profiling still shows jank, batch reveals to 2–3 characters per tick.</p></div></section>
+<h3>Build order</h3>
+<section class="pl-block pl-checklist"><ul class="pl-checklist"><li class=""><span class="pl-check">○</span><span>Theme foundation — fonts in app/layout.tsx, CRT tokens and effects in app/globals.css<span class="pl-note">First read the bundled Next docs (node_modules/next/dist/docs — fonts, CSS, metadata) per AGENTS.md; design-skill pass (design-taste router + frontend-design) happens here</span></span></li><li class=""><span class="pl-check">○</span><span>Phase shell — game.tsx over gameReducer, title-screen, starfield</span></li><li class=""><span class="pl-check">○</span><span>Cinematics — intro-crawl and boot-sequence (port boot-demo.html) on use-typewriter, skip handling</span></li><li class=""><span class="pl-check">○</span><span>Terminal UI — log, input, status bar, aria-live wiring</span></li><li class=""><span class="pl-check">○</span><span>Engine — types, parser, engine, Act 1 content<span class="pl-note">bun test: applyCommand paths incl. escaping the overrun node, ending flows, plus graph validation (every match.next / START_ID / OVERRUN_ID resolves; both endings reachable)</span></span></li><li class=""><span class="pl-check">○</span><span>Full campaign — Acts 2–3, endings.ts, threat tuning</span></li><li class=""><span class="pl-check">○</span><span>Ship gates — ada-wcag audit, reduced-motion pass, code review, build + lint clean</span></li></ul></section>
+<h3>Verification</h3>
+<p>Beyond <code>npm run build</code>, <code>npm run lint</code>, and the <code>bun test</code> suite (engine paths + graph validation), the real check is a full keyboard-only playthrough on <code>npm run dev</code>:</p>
+<ol>
+<li>Enter on the title → intro types out → Enter reveals, S skips → boot autoplays into the terminal.</li>
+<li>Type <code>HELP</code>, then <code>STATUS</code>, then <code>LOOK</code>, then gibberish — expect the command list, the status line with the location label, the chamber description, and an in-fiction fallback that restates the current choice.</li>
+<li>Play the golden path (level passage → quiet → hide → left → wait → flare) to the <strong>CREW SECURED</strong> ending with stats, then Enter — back to a fresh title.</li>
+<li>Start again; deliberately pick noisy routes until threat hits 5 — expect the overrun node's last-ditch choice, then <strong>SIGNAL LOST</strong>; Enter returns to the title and a completely fresh run (reload mid-game also starts fresh — nothing persists).</li>
+<li>Toggle <code>prefers-reduced-motion</code> in devtools — starfield, flicker, and cursor blink freeze; the game stays fully playable.</li>
+</ol>
+<p>Review gates before commit: <code>ada-wcag-compliance</code> on the four screens, <code>/mrbme-code-review</code> on the diff.</p>
+<h3>Open Questions</h3>
+<section class="pl-block pl-questions"><div class="pl-questionform"><div class="pl-question"><h4>Audio for v1?</h4><ul class="pl-options"><li><strong>Silent v1</strong> <span class="pl-pill pl-rec">Recommended</span><div class="pl-note">Ship the game, add sound later. Keeps scope tight.</div></li><li><strong>8-bit SFX</strong> <div class="pl-note">WebAudio-generated typing blips and alert tones, mute toggle. No audio assets needed.</div></li><li><strong>Chiptune loop + SFX</strong> <div class="pl-note">Adds an audio asset and an autoplay-policy dance. Biggest scope add.</div></li></ul></div><div class="pl-question"><h4>Anything to change before the build starts?</h4><div class="pl-freeform">Story tone, screen tweaks, scope cuts…</div></div></div></section>
+</main>
+<script>
+(function(){
+var canvas=document.getElementById('pl-canvas');if(!canvas)return;
+var vp=canvas.querySelector('.pl-viewport');
+var world=canvas.querySelector('.pl-world');
+if(!vp||!world)return;
+var boards=[].slice.call(world.querySelectorAll('.pl-artboard'));
+if(!boards.length)return;
+var GAP=72,LANE=140,WRAP=2600,PAD=70;
+var tx=0,ty=0,scale=1,bw=1,bh=1;
+var level=canvas.querySelector('.pl-zoom-level');
+function apply(){
+  world.style.transform='translate('+tx+'px,'+ty+'px) scale('+scale+')';
+  vp.style.backgroundPosition=tx+'px '+ty+'px';
+  vp.style.backgroundSize=(24*scale)+'px '+(24*scale)+'px';
+  if(level)level.textContent=Math.round(scale*100)+'%';
+}
+function layout(){
+  var order=[],byLane={};
+  boards.forEach(function(b){
+    var k=b.getAttribute('data-lane')||'0';
+    if(!byLane[k]){byLane[k]=[];order.push(k);}
+    byLane[k].push(b);
+  });
+  var labels={};
+  [].slice.call(world.querySelectorAll('.pl-lane-label')).forEach(function(el){
+    labels[el.getAttribute('data-lane')]=el;
+  });
+  var y=0,maxX=0;
+  order.forEach(function(k){
+    var label=labels[k];
+    if(label){label.style.left='0px';label.style.top=y+'px';y+=label.offsetHeight+18;}
+    var x=0,rowH=0;
+    byLane[k].forEach(function(b){
+      var w=b.offsetWidth,h=b.offsetHeight;
+      if(x>0&&x+w>WRAP){x=0;y+=rowH+GAP;rowH=0;}
+      b.style.left=x+'px';b.style.top=y+'px';
+      x+=w+GAP;
+      if(h>rowH)rowH=h;
+      if(x-GAP>maxX)maxX=x-GAP;
+    });
+    y+=rowH+LANE;
+  });
+  bw=Math.max(1,maxX);bh=Math.max(1,y-LANE);
+}
+function fit(){
+  var s=Math.min((vp.clientWidth-PAD*2)/bw,(vp.clientHeight-PAD*2)/bh,1);
+  scale=Math.max(s,0.05);
+  tx=(vp.clientWidth-bw*scale)/2;
+  ty=(vp.clientHeight-bh*scale)/2;
+  apply();
+}
+function zoomAt(cx,cy,next){
+  next=Math.min(Math.max(next,0.05),3);
+  tx=cx-(cx-tx)*(next/scale);
+  ty=cy-(cy-ty)*(next/scale);
+  scale=next;apply();
+}
+function drawConnectors(){
+  var el=canvas.querySelector('.pl-connector-data');if(!el)return;
+  var conns=[];try{conns=JSON.parse(el.textContent||'[]')}catch(err){return;}
+  if(!conns.length)return;
+  var M=48,NS='http://www.w3.org/2000/svg';
+  var svg=document.createElementNS(NS,'svg');
+  svg.setAttribute('class','pl-conn-layer');
+  svg.setAttribute('width',bw+2*M);svg.setAttribute('height',bh+2*M);
+  svg.style.left=(-M)+'px';svg.style.top=(-M)+'px';
+  svg.innerHTML='<defs><marker id="pl-arrow" viewBox="0 0 10 10" refX="9" refY="5" '+
+    'markerWidth="7" markerHeight="7" orient="auto-start-reverse">'+
+    '<path d="M 0 0 L 10 5 L 0 10 z"/></marker></defs>';
+  var esc=(window.CSS&&CSS.escape)?CSS.escape:function(s){return String(s).replace(/["\\]/g,'')};
+  conns.forEach(function(c){
+    var a=world.querySelector('.pl-artboard[data-id="'+esc(c.from)+'"]');
+    var b=world.querySelector('.pl-artboard[data-id="'+esc(c.to)+'"]');
+    if(!a||!b)return;
+    var r1={x:a.offsetLeft,y:a.offsetTop,w:a.offsetWidth,h:a.offsetHeight};
+    var r2={x:b.offsetLeft,y:b.offsetTop,w:b.offsetWidth,h:b.offsetHeight};
+    var p1,p2,d;
+    if(r2.x>=r1.x+r1.w){
+      p1={x:r1.x+r1.w+4,y:r1.y+r1.h/2};p2={x:r2.x-8,y:r2.y+r2.h/2};
+      var mx=(p1.x+p2.x)/2;
+      d='M'+(p1.x+M)+' '+(p1.y+M)+' C'+(mx+M)+' '+(p1.y+M)+' '+(mx+M)+' '+(p2.y+M)+' '+(p2.x+M)+' '+(p2.y+M);
+    }else if(r2.y>=r1.y+r1.h){
+      p1={x:r1.x+r1.w/2,y:r1.y+r1.h+4};p2={x:r2.x+r2.w/2,y:r2.y-8};
+      var my=(p1.y+p2.y)/2;
+      d='M'+(p1.x+M)+' '+(p1.y+M)+' C'+(p1.x+M)+' '+(my+M)+' '+(p2.x+M)+' '+(my+M)+' '+(p2.x+M)+' '+(p2.y+M);
+    }else{
+      p1={x:r1.x-4,y:r1.y+r1.h/2};p2={x:r2.x+r2.w+8,y:r2.y+r2.h/2};
+      var mx2=(p1.x+p2.x)/2;
+      d='M'+(p1.x+M)+' '+(p1.y+M)+' C'+(mx2+M)+' '+(p1.y+M)+' '+(mx2+M)+' '+(p2.y+M)+' '+(p2.x+M)+' '+(p2.y+M);
+    }
+    var path=document.createElementNS(NS,'path');
+    path.setAttribute('d',d);path.setAttribute('marker-end','url(#pl-arrow)');
+    svg.appendChild(path);
+    if(c.label){
+      var t=document.createElementNS(NS,'text');
+      t.setAttribute('x',(p1.x+p2.x)/2+M);t.setAttribute('y',(p1.y+p2.y)/2+M-8);
+      t.setAttribute('text-anchor','middle');t.textContent=c.label;
+      svg.appendChild(t);
+    }
+  });
+  world.insertBefore(svg,world.firstChild);
+}
+canvas.classList.add('is-live');
+layout();
+try{drawConnectors()}catch(err){console.warn('plan-render: connector drawing failed',err)}
+fit();
+vp.addEventListener('wheel',function(e){
+  e.preventDefault();
+  if(e.ctrlKey||e.metaKey){
+    var r=vp.getBoundingClientRect();
+    zoomAt(e.clientX-r.left,e.clientY-r.top,scale*Math.exp(-e.deltaY*0.01));
+  }else{tx-=e.deltaX;ty-=e.deltaY;apply();}
+},{passive:false});
+var drag=null;
+vp.addEventListener('pointerdown',function(e){
+  if(e.button!==0)return;
+  if(document.documentElement.classList.contains('pl-fb-mode'))return;
+  if(e.target.closest&&e.target.closest('.pl-fb-pin'))return;
+  drag={x:e.clientX,y:e.clientY};
+  vp.classList.add('is-panning');
+  vp.setPointerCapture(e.pointerId);
+});
+vp.addEventListener('pointermove',function(e){
+  if(!drag)return;
+  tx+=e.clientX-drag.x;ty+=e.clientY-drag.y;
+  drag={x:e.clientX,y:e.clientY};apply();
+});
+function endDrag(){drag=null;vp.classList.remove('is-panning');}
+vp.addEventListener('pointerup',endDrag);
+vp.addEventListener('pointercancel',endDrag);
+canvas.addEventListener('click',function(e){
+  var btn=e.target.closest?e.target.closest('[data-act]'):null;if(!btn)return;
+  var act=btn.getAttribute('data-act'),mx=vp.clientWidth/2,my=vp.clientHeight/2;
+  if(act==='in')zoomAt(mx,my,scale*1.25);
+  else if(act==='out')zoomAt(mx,my,scale/1.25);
+  else if(act==='reset')zoomAt(mx,my,1);
+  else if(act==='fit')fit();
+});
+window.addEventListener('resize',fit);
+})();
+</script>
+<script>
+(function(){
+var KEY='plan-feedback:'+location.pathname;
+var toggle=document.getElementById('pl-fb-toggle');
+var copyBtn=document.getElementById('pl-fb-copy');
+if(!toggle||!copyBtn)return;
+var load=function(){try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch(err){return[]}};
+var notes=load();
+// Notes stay usable in-memory even when the browser refuses the write (quota,
+// private mode); the toggle button then warns to copy feedback before closing.
+var persist=function(){
+  try{localStorage.setItem(KEY,JSON.stringify(notes))}
+  catch(err){
+    toggle.classList.add('pl-fb-warn');
+    toggle.title='Browser storage unavailable — notes last only for this page view; copy feedback before closing';
+  }
+};
+var excerpt=function(el){return (el.textContent||'').trim().replace(/\s+/g,' ').slice(0,90)};
+var targets=[];
+[].slice.call(document.querySelectorAll('.pl-doc h1,.pl-doc h2,.pl-doc h3,.pl-doc h4,.pl-doc .pl-block')).reduce(function(head,el){
+  if(/^H[1-4]$/.test(el.tagName))return (el.textContent||'').trim();
+  var type=(el.className.match(/pl-(?!block\b)([a-z-]+)/)||[])[1]||'block';
+  el.dataset.fbKey='block:'+targets.length;
+  targets.push({key:el.dataset.fbKey,el:el,desc:{kind:'block',type:type,heading:head,excerpt:excerpt(el)}});
+  return head;
+},'');
+[].slice.call(document.querySelectorAll('.pl-artboard')).forEach(function(el,i){
+  var label=el.querySelector('.pl-artboard-label');
+  el.dataset.fbKey='artboard:'+i;
+  targets.push({key:el.dataset.fbKey,el:el,desc:{kind:'artboard',id:el.getAttribute('data-id')||'',
+    label:label?label.textContent.trim():'artboard '+(i+1)}});
+});
+var byKey=function(k){for(var i=0;i<targets.length;i++)if(targets[i].key===k)return targets[i];return null};
+var pop=document.createElement('div');
+pop.className='pl-fb-pop';
+pop.innerHTML='<textarea class="pl-fb-text" rows="3" placeholder="Leave a note for the agent…"></textarea>'+
+  '<div class="pl-fb-pop-row"><button class="pl-cbtn" data-fb="delete">Delete</button>'+
+  '<span class="pl-spacer"></span><button class="pl-cbtn" data-fb="cancel">Cancel</button>'+
+  '<button class="pl-cbtn pl-fb-save" data-fb="save">Save</button></div>';
+document.body.appendChild(pop);
+var current=null;
+var closePop=function(){pop.style.display='none';current=null};
+// Switching targets or clicking away commits typed text instead of losing it;
+// only the explicit Cancel button discards.
+var commitDraft=function(){
+  if(!current||pop.style.display!=='block')return;
+  var text=pop.querySelector('.pl-fb-text').value.trim();
+  if(!text)return;
+  if(current.note){if(current.note.note!==text){current.note.note=text;persist();renderPins()}}
+  else{notes.push({key:current.target.key,target:current.target.desc,note:text,created:new Date().toISOString()});persist();renderPins()}
+};
+var openPop=function(target,note,at){
+  commitDraft();
+  current={target:target,note:note};
+  pop.querySelector('.pl-fb-text').value=note?note.note:'';
+  pop.querySelector('[data-fb=delete]').style.display=note?'':'none';
+  pop.style.display='block';
+  var w=pop.offsetWidth,h=pop.offsetHeight;
+  pop.style.left=Math.max(8,Math.min(at.x,innerWidth-w-8))+'px';
+  pop.style.top=Math.max(8,Math.min(at.y,innerHeight-h-8))+'px';
+  pop.querySelector('.pl-fb-text').focus();
+};
+var renderPins=function(){
+  [].slice.call(document.querySelectorAll('.pl-fb-pin')).forEach(function(p){p.remove()});
+  var stacks={};
+  notes.forEach(function(n){
+    var t=byKey(n.key);if(!t)return;
+    var idx=stacks[n.key]=(stacks[n.key]||0)+1;
+    var pin=document.createElement('button');
+    pin.className='pl-fb-pin';pin.textContent=idx;pin.title=n.note;
+    pin.style.top=(6+(idx-1)*26)+'px';
+    pin.addEventListener('click',function(e){
+      e.stopPropagation();e.preventDefault();
+      openPop(t,n,{x:e.clientX+10,y:e.clientY+10});
+    });
+    t.el.classList.add('pl-fb-target');t.el.appendChild(pin);
+  });
+  copyBtn.style.display=notes.length?'':'none';
+  copyBtn.textContent='Copy feedback ('+notes.length+')';
+};
+pop.addEventListener('click',function(e){
+  var act=e.target.getAttribute&&e.target.getAttribute('data-fb');if(!act)return;
+  if(act==='save'){
+    commitDraft();
+  }else if(act==='delete'&&current&&current.note){
+    notes=notes.filter(function(n){return n!==current.note});
+    persist();renderPins();
+  }
+  closePop();
+});
+document.addEventListener('click',function(e){
+  if(pop.contains(e.target))return;
+  if(e.target.closest&&e.target.closest('.pl-fb-pin'))return;
+  if(!document.documentElement.classList.contains('pl-fb-mode')){if(pop.style.display==='block'){commitDraft();closePop()}return;}
+  var el=e.target.closest&&e.target.closest('[data-fb-key]');
+  if(!el){if(pop.style.display==='block'){commitDraft();closePop()}return;}
+  e.preventDefault();e.stopPropagation();
+  openPop(byKey(el.dataset.fbKey),null,{x:e.clientX+10,y:e.clientY+10});
+},true);
+toggle.addEventListener('click',function(){
+  var on=document.documentElement.classList.toggle('pl-fb-mode');
+  toggle.classList.toggle('pl-fb-on',on);
+  if(!on){commitDraft();closePop()}
+});
+copyBtn.addEventListener('click',function(){
+  var payload=JSON.stringify({plan:document.title,exported:new Date().toISOString(),
+    notes:notes.map(function(n){return{target:n.target,note:n.note}})},null,2);
+  var done=function(){copyBtn.textContent='Copied \u2713';
+    setTimeout(function(){copyBtn.textContent='Copy feedback ('+notes.length+')'},1500)};
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(payload).then(done,function(){prompt('Copy feedback JSON:',payload)});
+  }else{prompt('Copy feedback JSON:',payload)}
+});
+renderPins();
+})();
+</script>
+
+</body>
+</html>
