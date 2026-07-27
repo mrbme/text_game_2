@@ -37,13 +37,6 @@
     transform: translate(-50%, -50%);
     width: max(100vw, 177.68vh);
     aspect-ratio: 1672 / 941;
-    animation: drift 34s ease-in-out infinite alternate;
-  }
-
-  /* barely-there handheld push-in; stills of this frame should never look locked off */
-  @keyframes drift {
-    from { transform: translate(-50%, -50%) scale(1.002); }
-    to { transform: translate(-50.5%, -49.7%) scale(1.014); }
   }
 
   /* the CRT lighting the room it sits in — the single biggest cue that the text is really there */
@@ -159,15 +152,6 @@
        smearing the letterform; a cyan glow on cyan text is what read as haze */
     text-shadow: 1px 0 5px #0400ff;
     white-space: pre-wrap;
-    animation: sync 13s steps(1) infinite;
-  }
-
-  /* rare sync stumble — reads as an unstable signal rather than a CSS animation */
-  @keyframes sync {
-    0%, 92.8%, 100% { transform: translate(0, 0); }
-    93% { transform: translate(-0.14%, -0.28%); }
-    93.3% { transform: translate(0.1%, 0.22%); }
-    93.6% { transform: translate(0, 0); }
   }
   .screen::-webkit-scrollbar { display: none; }
 
@@ -197,10 +181,18 @@
   .line { min-height: 1.3em; }
   .dim { color: #3f93a3; text-shadow: none; }
   .ok { color: #c9feff; text-shadow: 1px 0 5px #0400ff; }
-  .fail { color: #ff5c49; text-shadow: 1px 0 5px rgba(255, 0, 40, 0.75); }
+  /* single-phosphor tube: no hue available, so failure is denoted by the !! glyph plus inverse
+     video — the phosphor fills the cell and the glyphs are knocked out of it, exactly how a
+     mono terminal flags a line. No padding, so the tag still occupies its 6-column cell. */
+  .fail {
+    background: #74f9ff;
+    color: #00060a;
+    text-shadow: none;
+    box-shadow: 0 0 8px rgba(116, 249, 255, 0.45);
+  }
   .alert {
-    color: #ff5c49;
-    text-shadow: 1px 0 5px rgba(255, 0, 40, 0.75);
+    color: #c9feff;
+    text-shadow: 1px 0 5px #0400ff;
     animation: alertblink 1.1s steps(1) infinite;
   }
   @keyframes alertblink { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
@@ -230,7 +222,6 @@
     font-family: 'VT323', monospace;
     color: #74f9ff;
     text-align: center;
-    animation: sync 13s steps(1) infinite;
   }
   .overlay[hidden] { display: none; }
 
@@ -307,7 +298,7 @@
 
   @media (prefers-reduced-motion: reduce) {
     .flicker, .cursor, .alert, .logo-art, .logo-art .row,
-    .frame, .spill, .grain, .screen, .overlay { animation: none; }
+    .spill, .grain { animation: none; }
     .grain { display: none; }
   }
 </style>
@@ -354,7 +345,7 @@
   //  gap  — blank line
   //  mem  — memcore count-up to target
   //  bar  — block-character progress bar that fills in place
-  //  spin — label with a |/-\ spinner that resolves to an [ OK ] / [FAIL] tag
+  //  spin — label with a |/-\ spinner that resolves to an [ OK ] / [ !! ] tag
   //  app  — append text to the previous line
   const STEPS = [
     { line: [['[T+00.000] ', 'dim'], ['cold start — reactor handshake']], d: 500 },
@@ -369,9 +360,9 @@
     { spin: '[T+00.512] cryo bay watchdog ..............', tag: '[ OK ]', cls: 'ok', spins: 4, d: 380 },
     { gap: true, d: 150 },
     { line: [['[T+00.688] ', 'dim'], ['mounting /comms']], d: 550 },
-    { spin: '[T+00.702] visual feed handshake ..........', tag: '[FAIL]', cls: 'fail', spins: 14, d: 420 },
-    { spin: '[T+00.734] retrying visual feed (1/2) .....', tag: '[FAIL]', cls: 'fail', spins: 16, d: 420 },
-    { spin: '[T+00.771] retrying visual feed (2/2) .....', tag: '[FAIL]', cls: 'fail', spins: 18, d: 550 },
+    { spin: '[T+00.702] visual feed handshake ..........', tag: '[ !! ]', cls: 'fail', spins: 14, d: 420 },
+    { spin: '[T+00.734] retrying visual feed (1/2) .....', tag: '[ !! ]', cls: 'fail', spins: 16, d: 420 },
+    { spin: '[T+00.771] retrying visual feed (2/2) .....', tag: '[ !! ]', cls: 'fail', spins: 18, d: 550 },
     { spin: '[T+00.803] text relay handshake ...........', tag: '[ OK ]', cls: 'ok', spins: 5, d: 400 },
     { line: [['!! VISUAL COMMS OFFLINE', 'alert']], d: 60 },
     { line: [['!! RELAY LOCKED TO TEXT-ONLY MODE', 'alert']], d: 900 },
