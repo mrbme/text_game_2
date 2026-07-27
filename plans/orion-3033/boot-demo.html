@@ -69,7 +69,7 @@
     inset: -12%;
     pointer-events: none;
     z-index: 6;
-    opacity: 0.07;
+    opacity: 0.04;
     mix-blend-mode: overlay;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
     animation: grain 0.75s steps(5) infinite;
@@ -111,7 +111,7 @@
     position: absolute;
     inset: 0;
     pointer-events: none;
-    background: repeating-linear-gradient(0deg, transparent 0 1.5px, rgba(0, 0, 0, 0.24) 1.5px 3px);
+    background: repeating-linear-gradient(0deg, transparent 0 2px, rgba(0, 0, 0, 0.16) 2px 4px);
     z-index: 2;
   }
 
@@ -128,27 +128,6 @@
     border-radius: inherit;
   }
 
-  /* aperture grille + a raking reflection in the glass (no roll bar — reads as a gimmick) */
-  .glass {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    z-index: 4;
-    overflow: hidden;
-    border-radius: inherit;
-  }
-  .glass::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    mix-blend-mode: screen;
-    background:
-      linear-gradient(112deg, rgba(190, 230, 255, 0.03) 0 6%, transparent 17%),
-      repeating-linear-gradient(90deg,
-        rgba(255, 40, 40, 0.018) 0 1px,
-        rgba(40, 255, 90, 0.018) 1px 2px,
-        rgba(40, 90, 255, 0.018) 2px 3px);
-  }
   .flicker { animation: flicker 9s infinite steps(1); }
 
   @keyframes flicker {
@@ -169,19 +148,17 @@
     scrollbar-width: none;
     padding: 3.2cqw 3.6cqw 3.6cqw;
     font-family: 'VT323', monospace;
-    font-size: clamp(9px, 1.8cqw, 19px);
-    line-height: 1.35;
-    letter-spacing: 0.4px;
+    /* Sized so the longest line always fits: 50 cols x 0.47em advance x 2.4cqw = ~56cqw of the
+       92.8cqw usable width. Pure cqw with no clamp — a px ceiling breaks the proportion and
+       lets long lines run off the glass at smaller windows. */
+    font-size: 2.4cqw;
+    line-height: 1.3;
+    letter-spacing: 0.5px;
     color: #74f9ff;
-    /* phosphor: tight core, wide halation, and a convergence error either side of the stroke */
-    text-shadow:
-      -0.5px 0 0 rgba(255, 70, 70, 0.22),
-      0.5px 0 0 rgba(70, 120, 255, 0.22),
-      0 0 3px rgba(116, 249, 255, 0.55),
-      0 0 9px rgba(116, 249, 255, 0.3),
-      0 0 22px rgba(40, 110, 255, 0.28);
+    /* saturated blue under a cyan core (per console2.html) — a different hue blooms without
+       smearing the letterform; a cyan glow on cyan text is what read as haze */
+    text-shadow: 1px 0 5px #0400ff;
     white-space: pre-wrap;
-    filter: blur(0.32px); /* no CRT resolves a glyph edge perfectly sharp */
     animation: sync 13s steps(1) infinite;
   }
 
@@ -201,36 +178,36 @@
     box-shadow: 0 0 1cqw rgba(116, 249, 255, 0.25), inset 0 0 1cqw rgba(116, 249, 255, 0.12);
   }
   .masthead .title {
-    font-size: 3cqw;
-    letter-spacing: 0.6cqw;
+    font-size: 3.1cqw;
+    letter-spacing: 0.5cqw;
     color: #c9feff;
     text-shadow: 0 0 7px rgba(90, 190, 255, 0.55);
   }
-  .masthead .sub { color: #3f93a3; font-size: 1.55cqw; letter-spacing: 0.5px; }
+  .masthead .sub { color: #3f93a3; font-size: 1.7cqw; letter-spacing: 0.5px; }
   .masthead .meters {
     display: flex;
-    gap: 2cqw;
-    margin-top: 0.9cqw;
+    gap: 2.4cqw;
+    margin-top: 1.2cqw;
     color: #3f93a3;
-    font-size: 1.55cqw;
+    font-size: 1.7cqw;
     white-space: nowrap;
   }
   .masthead .meters b { color: #c9feff; font-weight: normal; }
 
   .line { min-height: 1.3em; }
   .dim { color: #3f93a3; text-shadow: none; }
-  .ok { color: #c9feff; text-shadow: 0 0 6px rgba(90, 190, 255, 0.5); }
-  .fail { color: #ff5c49; text-shadow: 0 0 6px rgba(255, 92, 73, 0.5); }
+  .ok { color: #c9feff; text-shadow: 1px 0 5px #0400ff; }
+  .fail { color: #ff5c49; text-shadow: 1px 0 5px rgba(255, 0, 40, 0.75); }
   .alert {
     color: #ff5c49;
-    text-shadow: 0 0 6px rgba(255, 92, 73, 0.5);
+    text-shadow: 1px 0 5px rgba(255, 0, 40, 0.75);
     animation: alertblink 1.1s steps(1) infinite;
   }
   @keyframes alertblink { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
 
   .cursor {
     display: inline-block;
-    width: 0.62em;
+    width: 0.55em; /* matches VT323's ~0.47em advance plus tracking */
     height: 1em;
     background: #74f9ff;
     vertical-align: -0.12em;
@@ -253,7 +230,6 @@
     font-family: 'VT323', monospace;
     color: #74f9ff;
     text-align: center;
-    filter: blur(0.32px);
     animation: sync 13s steps(1) infinite;
   }
   .overlay[hidden] { display: none; }
@@ -263,10 +239,12 @@
   /* checkerboard alpha mask eats every other pixel of the glyphs = 1-bit console dither */
   .logo-art {
     white-space: pre;
-    font-size: 1.85cqw;
+    font-family: 'VT323', monospace;
+    /* 47 columns at VT323's 0.47em advance — any larger clips the final N */
+    font-size: 2.6cqw;
     line-height: 1.04;
     color: #9df3ff;
-    text-shadow: 0 0 0.9cqw rgba(90, 190, 255, 0.6);
+    text-shadow: 1px 0 5px #0400ff;
     -webkit-mask-image: repeating-conic-gradient(#000 0% 25%, transparent 0% 50%);
     mask-image: repeating-conic-gradient(#000 0% 25%, transparent 0% 50%);
     -webkit-mask-size: 2px 2px;
@@ -289,21 +267,21 @@
 
   .logo-tag {
     margin-top: 0.9cqw;
-    font-size: 1.85cqw;
+    font-size: 1.9cqw;
     letter-spacing: 0.26cqw;
     color: #74f9ff;
   }
-  .logo-sub { font-size: 1.45cqw; color: #3f93a3; letter-spacing: 0.5px; }
+  .logo-sub { font-size: 1.6cqw; color: #3f93a3; letter-spacing: 0.5px; }
 
   .boot-title {
-    font-size: 2.7cqw;
+    font-size: 3cqw;
     letter-spacing: 0.32cqw;
     color: #c9feff;
-    text-shadow: 0 0 0.7cqw rgba(90, 190, 255, 0.5);
+    text-shadow: 1px 0 5px #0400ff;
   }
   .boot-dots { display: inline-block; width: 3ch; text-align: left; }
-  .boot-meter { font-size: 1.95cqw; white-space: pre; }
-  .boot-note { font-size: 1.45cqw; color: #3f93a3; letter-spacing: 0.5px; }
+  .boot-meter { font-size: 2.2cqw; white-space: pre; }
+  .boot-note { font-size: 1.6cqw; color: #3f93a3; letter-spacing: 0.5px; }
 
   .sr-only {
     position: absolute;
@@ -363,8 +341,6 @@
           </div>
           <div id="out"></div>
         </div>
-
-        <div class="glass" aria-hidden="true"></div>
       </div>
       <div class="spill" aria-hidden="true"></div>
     </div>

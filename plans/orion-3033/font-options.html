@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>ORION-OS — retro font options</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=DotGothic16&family=Sixtyfour&family=Pixelify+Sans:wght@400..700&family=Handjet:wght@100..900&family=Silkscreen:wght@400;700&family=Courier+Prime:wght@400;700&family=VT323&display=swap" rel="stylesheet" />
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0a0a0c;
+    font-family: 'Courier Prime', monospace;
+    color: #8fa3ad;
+    padding: 28px 24px 60px;
+  }
+
+  h1 { font-size: 17px; letter-spacing: 2px; color: #cfe8f2; margin-bottom: 4px; }
+  .lede { font-size: 13px; margin-bottom: 26px; color: #6e828c; }
+
+  .grid { display: flex; flex-direction: column; gap: 26px; }
+
+  .card { border: 1px solid #1d2b33; border-radius: 6px; overflow: hidden; }
+
+  .cardhead {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    padding: 9px 14px;
+    background: #101a1f;
+    border-bottom: 1px solid #1d2b33;
+    font-size: 12px;
+    letter-spacing: 1px;
+  }
+  .cardhead .name { color: #9df3ff; font-weight: 700; font-size: 13px; }
+  .cardhead .meta { color: #5f7480; }
+  .cardhead .bad { color: #ff7d6d; }
+  .cardhead .good { color: #6fd39a; }
+
+  /* the CRT panel is locked to the demo's real glass width so column counts are truthful */
+  .crt {
+    position: relative;
+    width: 852px;
+    height: 172px;
+    background: #00060a;
+    overflow: hidden;
+  }
+  .crt::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 2;
+    background: repeating-linear-gradient(0deg, transparent 0 1.5px, rgba(0, 0, 0, 0.24) 1.5px 3px);
+  }
+  .crt::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 3;
+    box-shadow: inset 0 0 52px rgba(0, 0, 0, 0.9), inset 0 0 12px rgba(116, 249, 255, 0.07);
+  }
+
+  .log {
+    padding: 27px 31px;
+    line-height: 1.4;
+    color: #74f9ff;
+    white-space: pre;
+    text-shadow: 0 0 2px rgba(116, 249, 255, 0.5), 1px 0 6px rgba(24, 40, 255, 0.55);
+    filter: drop-shadow(0 0 4px rgba(20, 184, 189, 0.5));
+  }
+  .dim { color: #3f93a3; text-shadow: none; }
+  .ok { color: #c9feff; }
+  .fail { color: #ff5c49; }
+  .blocks { font-family: 'VT323', monospace; }
+</style>
+</head>
+<body>
+  <h1>ORION-OS — RETRO FONT OPTIONS</h1>
+  <p class="lede">Each panel is 852px wide — the real width of the CRT glass in the demo — so the type size shown is the size the font would actually need to fit a full boot-log line. Same palette, glow, and scanlines as the demo.</p>
+
+  <div class="grid" id="grid"></div>
+
+<script>
+  const FONTS = [
+    { name: 'Courier Prime', stack: "'Courier Prime', 'VT323', monospace", note: 'current' },
+    { name: 'VT323', stack: "'VT323', monospace", note: 'DOS/DEC terminal — the demo’s original font' },
+    { name: 'Press Start 2P', stack: "'Press Start 2P', 'VT323', monospace", note: '8-bit arcade' },
+    { name: 'DotGothic16', stack: "'DotGothic16', 'VT323', monospace", note: 'dot-matrix console' },
+    { name: 'Sixtyfour', stack: "'Sixtyfour', 'VT323', monospace", note: 'C64 home computer — SELECTED' },
+    { name: 'Pixelify Sans', stack: "'Pixelify Sans', 'VT323', monospace", note: 'pixel sans' },
+    { name: 'Handjet', stack: "'Handjet', 'VT323', monospace", note: 'element/dot-matrix, variable' },
+    { name: 'Silkscreen', stack: "'Silkscreen', 'VT323', monospace", note: 'tiny bitmap pixel' },
+  ];
+
+  // longest line the boot log actually prints, incl. the [ OK ] tag
+  const LONGEST = '[T+00.342] gravity ring spin-up ........... [ OK ]';
+  const USABLE = 852 - 31 * 2; // panel width minus the demo's side padding
+
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+
+  const advanceAt = (stack, px, ch) => {
+    ctx.font = `${px}px ${stack}`;
+    return ctx.measureText(ch).width;
+  };
+
+  const buildCard = (font) => {
+    // is it truly monospace? a proportional font breaks the dot-leader columns
+    const wideCh = advanceAt(font.stack, 100, 'W');
+    const narrowCh = advanceAt(font.stack, 100, 'i');
+    const mono = Math.abs(wideCh - narrowCh) < 0.6;
+
+    // largest whole px size where the longest log line still fits the glass
+    const perPx = advanceAt(font.stack, 100, LONGEST) / 100;
+    const fitted = Math.floor(USABLE / perPx);
+    const cols = Math.floor(USABLE / (advanceAt(font.stack, fitted, 'M') || 1));
+
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="cardhead">
+        <span class="name">${font.name}</span>
+        <span class="meta">${font.note}</span>
+        <span class="${mono ? 'good' : 'bad'}">${mono ? 'monospace ✓' : 'NOT monospace ✗ (breaks column alignment)'}</span>
+        <span class="meta">fits at ${fitted}px · ${cols} columns</span>
+      </div>
+      <div class="crt">
+        <div class="log" style="font-family: ${font.stack}; font-size: ${fitted}px;"><span class="dim">[T+00.198] </span>loading krnl33x.img <span class="blocks">▓▓▓▓▓▓▓▓▓▓▓▓▓▓</span> <span class="ok">100%</span>
+<span class="dim">[T+00.342] </span>gravity ring spin-up ........... <span class="ok">[ OK ]</span>
+<span class="dim">[T+00.702] </span>visual feed handshake .......... <span class="fail">[FAIL]</span>
+<span class="fail">!! RELAY LOCKED TO TEXT-ONLY MODE</span></div>
+      </div>`;
+    return card;
+  };
+
+  // canvas measureText silently uses fallback metrics unless the face is actually loaded first
+  const start = async () => {
+    await Promise.all(FONTS.map((f) => document.fonts.load(`100px "${f.name}"`)));
+    await document.fonts.ready;
+    const grid = document.getElementById('grid');
+    FONTS.forEach((f) => grid.appendChild(buildCard(f)));
+  };
+  start();
+</script>
+</body>
+</html>
