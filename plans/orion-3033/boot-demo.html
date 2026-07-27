@@ -121,6 +121,15 @@
     border-radius: inherit;
   }
 
+  .filters { position: absolute; width: 0; height: 0; overflow: hidden; }
+
+  /* everything drawn on the tube face warps together, so the curvature is consistent */
+  .tube {
+    position: absolute;
+    inset: 0;
+    filter: url(#crt-warp);
+  }
+
   .flicker { animation: flicker 9s infinite steps(1); }
 
   @keyframes flicker {
@@ -304,10 +313,21 @@
 </style>
 </head>
 <body>
+  <!-- barrel warp: same optics as console.html's spherize(), but as a displacement field applied
+       to the live DOM instead of a per-pixel canvas remap. The map is generated in JS below. -->
+  <svg class="filters" aria-hidden="true" focusable="false">
+    <filter id="crt-warp" x="-4%" y="-4%" width="108%" height="108%" color-interpolation-filters="sRGB">
+      <feImage id="warp-map" result="warpmap" preserveAspectRatio="none" />
+      <feDisplacementMap id="warp-disp" in="SourceGraphic" in2="warpmap" scale="0"
+                         xChannelSelector="R" yChannelSelector="G" />
+    </filter>
+  </svg>
+
   <div class="stage">
     <div class="frame">
       <img class="console" src="console.png" alt="" />
       <div class="screen-wrap flicker">
+       <div class="tube" id="tube">
         <div class="overlay" id="phase-logo">
           <div class="logo">
             <span class="sr-only">OrionOS</span>
@@ -332,6 +352,7 @@
           </div>
           <div id="out"></div>
         </div>
+       </div>
       </div>
       <div class="spill" aria-hidden="true"></div>
     </div>
@@ -372,6 +393,63 @@
     { gap: true, d: 100 },
     { line: [['READY.', 'ok']], d: 200 },
   ];
+
+  // ---- CRT barrel warp -------------------------------------------------------------------
+  // Displacement grows with r^2 from the centre, the same falloff as console.html's spherize().
+  // WARP is the peak corner displacement in px — 0 turns the effect off entirely.
+  const WARP = 10;
+  const MAP_W = 320;
+
+  const buildWarpMap = (w, h) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    const img = ctx.createImageData(w, h);
+    const cx = (w - 1) / 2;
+    const cy = (h - 1) / 2;
+    const maxR = Math.hypot(cx, cy);
+
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const dx = (x - cx) / maxR;
+        const dy = (y - cy) / maxR;
+        const r2 = dx * dx + dy * dy;
+        // negative = sample from inside the edge, which bulges content outward (barrel)
+        const i = (y * w + x) * 4;
+        img.data[i] = Math.round(128 - dx * r2 * 127);
+        img.data[i + 1] = Math.round(128 - dy * r2 * 127);
+        img.data[i + 2] = 128;
+        img.data[i + 3] = 255;
+      }
+    }
+    ctx.putImageData(img, 0, 0);
+    return canvas.toDataURL();
+  };
+
+  const applyWarp = () => {
+    const tube = document.getElementById('tube');
+    const disp = document.getElementById('warp-disp');
+    const mapNode = document.getElementById('warp-map');
+    if (!WARP) {
+      tube.style.filter = 'none';
+      return;
+    }
+    const { width, height } = tube.getBoundingClientRect();
+    if (!width || !height) return;
+    // map matches the tube's aspect so the warp isn't stretched oval by feImage
+    const url = buildWarpMap(MAP_W, Math.max(2, Math.round((MAP_W * height) / width)));
+    mapNode.setAttribute('href', url);
+    mapNode.setAttributeNS('http://www.w3.org/1999/xlink', 'href', url);
+    disp.setAttribute('scale', String(WARP * 2)); // channel range is ±0.5, so double it
+  };
+
+  applyWarp();
+  let warpTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(warpTimer);
+    warpTimer = setTimeout(applyWarp, 150);
+  });
 
   const SPIN_CHARS = ['|', '/', '-', '\\'];
   const SPEED = 1.5; // single pacing knob — raise to slow the whole boot down, lower to speed it up
